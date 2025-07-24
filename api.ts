@@ -1,4 +1,6 @@
-const baseUrl = 'http://192.168.100.6:3000';
+import Constants from 'expo-constants';
+
+const baseUrl = Constants?.manifest?.extra?.BASE_URL || process.env.BASE_URL || 'http://localhost:3000';
 
 type ApiEndpoints = {
     login: string;
