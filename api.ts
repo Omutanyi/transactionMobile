@@ -1,6 +1,11 @@
 import Constants from 'expo-constants';
 
-const baseUrl = Constants?.manifest?.extra?.BASE_URL || process.env.BASE_URL || 'http://localhost:3000';
+type AppConfig = {
+  BASE_URL: string;
+};
+const { BASE_URL } = Constants.expoConfig?.extra as AppConfig;
+
+const baseUrl = BASE_URL || 'http://localhost:3000';
 
 type ApiEndpoints = {
     login: string;
