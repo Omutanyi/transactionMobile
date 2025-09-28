@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Platform, ToastAndroid, TouchableOpacity } from 'react-native';
+import { View, Text, Button, StyleSheet, Platform, ToastAndroid, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { RootState } from '../redux/store';
 import { request } from '../requests';
 import apis from '../api';
 import { Ionicons } from '@expo/vector-icons';
+import { Container, StyledInput, ErrorText, ButtonWrapper } from '../components/StyledComponents';
 
 const currencies = ['USD', 'EUR', 'GBP'];
 
@@ -62,98 +63,49 @@ const SendPaymentScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   }, [toast]);
 
   return (
-    <View style={styles.container}>
+    <Container>
       <Text style={styles.title}>
         Send Payment 
       </Text>
-      <Text style={styles.label}>Recipient</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={recipient}
-          onValueChange={setRecipient}
-          style={[styles.picker, { paddingLeft: 30 }]}
+      <StyledInput
+        placeholder="Recipient"
+        value={recipient}
+        onChangeText={setRecipient}
+      />
+      <StyledInput
+        placeholder="Amount"
+        value={amount}
+        onChangeText={setAmount}
+        keyboardType="numeric"
+      />
+      <StyledInput
+        placeholder="Currency"
+        value={currency}
+        onChangeText={setCurrency}
+      />
+      {toast ? <ErrorText>{toast}</ErrorText> : null}
+      <ButtonWrapper>
+        <TouchableOpacity
+          style={[styles.button, loading && { backgroundColor: '#aaa', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
+          onPress={handleSend}
+          disabled={loading}
         >
-          <Picker.Item label="Select recipient" value="" />
-          {users.map((u) => (
-            <Picker.Item key={u.email} label={u.email} value={u.id} />
-          ))}
-        </Picker>
-      </View>
-      <Text style={styles.label}>Amount</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Ionicons name="cash-outline" size={18} color="#007bff" style={{ marginRight: 6 }} />
-        <TextInput
-          style={[styles.input, { flex: 1 }]}
-          value={amount}
-          onChangeText={setAmount}
-          keyboardType="numeric"
-          placeholder="Enter amount"
-        />
-      </View>
-      <Text style={styles.label}>Currency</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={currency}
-          onValueChange={setCurrency}
-          style={[styles.picker, { paddingLeft: 30 }]}
-        >
-          {currencies.map((cur) => (
-            <Picker.Item key={cur} label={cur} value={cur} />
-          ))}
-        </Picker>
-      </View>
-    <TouchableOpacity
-      style={[styles.button, loading && { backgroundColor: '#aaa', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
-      onPress={handleSend}
-      disabled={loading}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Ionicons name="paper-plane" size={18} color="#fff" style={{ marginRight: 6 }} />
-        <Text style={styles.buttonText}>{loading ? 'Sending...' : 'Send Payment'}</Text>
-      </View>
-    </TouchableOpacity>
-      {toast && Platform.OS !== 'android' && (
-        <View style={styles.toast}><Text style={styles.toastText}>{toast}</Text></View>
-      )}
-    </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="paper-plane" size={18} color="#fff" style={{ marginRight: 6 }} />
+            <Text style={styles.buttonText}>{loading ? 'Sending...' : 'Send Payment'}</Text>
+          </View>
+        </TouchableOpacity>
+      </ButtonWrapper>
+    </Container>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-  },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 20,
     alignSelf: 'center',
-  },
-  label: {
-    fontWeight: '600',
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-  },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    marginBottom: 10,
-    overflow: 'hidden',
-  },
-  picker: {
-    // height: 44,
-    width: '100%',
   },
   button: {
     backgroundColor: '#007bff',
@@ -166,20 +118,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  toast: {
-    position: 'absolute',
-    bottom: 40,
-    left: 0,
-    right: 0,
-    backgroundColor: '#333',
-    padding: 10,
-    borderRadius: 8,
-    zIndex: 999,
-    alignItems: 'center',
-  },
-  toastText: {
-    color: '#fff',
   },
 });
 

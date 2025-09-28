@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, Image } from 'react-native';
+import { Button, Text } from 'react-native';
 import { request } from '../requests';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apis from '../api';
-import { setUser } from '../store';
+import { RootState } from '../redux/store';
+import { setUser } from '../redux/userReducer';
 import { useDispatch } from 'react-redux';
+import { Container, LogoWrapper, StyledImage, ErrorText, ButtonWrapper, Title } from '../components/StyledComponents';
+import InputWithIcon from '../components/input/InputWithIcon';
+import { Ionicons } from '@expo/vector-icons';
+import ButtonWithIcon from '../components/input/ButtonWithIcon';
+import Link from '../components/input/Link';
+import SocialLoginOptions from '../components/input/SocialLoginOptions';
+import styled from '@emotion/native';
 
 interface Props {
     navigation: any;
@@ -13,19 +21,35 @@ interface Props {
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
     const dispatch = useDispatch();
     const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     const handleLogin = async () => {
         try {
+            console.log('Attempting to login with:', { email, username, password, apisLogin: apis.login });
             const data = await request(apis.login, {
                 method: 'POST',
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, username, password }),
             });
             if (data && data.token) {
                 await AsyncStorage.setItem('jwt', data.token);
-                dispatch(setUser({ email: data.user?.email, role: data.user?.role }));
-                navigation.navigate('Dashboard');
+                // Fetch user profile after login
+                const profile = await request(apis.getProfile, {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${data.token}` },
+                });
+                dispatch(setUser({
+                    email: profile?.Email,
+                    username: profile?.Username,
+                    role: profile?.role?.RoleName,
+                    ...profile,
+                }));
+                if (profile?.role?.RoleName !== 'Admin') {
+                    navigation.navigate('AdminDashboard');
+                } else {
+                    navigation.navigate('UserDashboard');
+                }
             }
         } catch (e: any) {
             setError(e?.message || 'An unexpected error occurred');
@@ -34,55 +58,52 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
-            <View style={{ alignItems: 'center', marginBottom: 30 }}>
-            <Image
-                source={require('../assets/transactlogo.png')}
-                style={{ width: 100, height: 100, resizeMode: 'contain' }}
+        <Container>
+            <LogoWrapper>
+                <StyledImage source={require('../assets/transactlogo.png')} />
+            </LogoWrapper>
+            <Title>Login</Title>
+            <InputWithIcon
+                icon={<Ionicons name="person-outline" size={20} color="#888" />}
+                placeholder="Username"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
             />
-            </View>
-            <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
+            {/* <InputWithIcon
+                icon={<Ionicons name="mail-outline" size={20} color="#888" />}
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+            /> */}
+            <InputWithIcon
+                icon={<Ionicons name="lock-closed-outline" size={20} color="#888" />}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
             />
-            <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
+            {error ? <ErrorText>{error}</ErrorText> : null}
+            <Link onPress={() => navigation.navigate('ForgotPassword')}>Forgot password?</Link>
+            <ButtonWrapper>
+                <ButtonWithIcon
+                    title="Login"
+                    onPress={handleLogin}
+                    icon={<Ionicons name="log-in-outline" size={20} color="#fff" />}
+                    bgColor="#007AFF"
+                />
+            </ButtonWrapper>
+            <SocialLoginOptions
+                onGoogle={() => {}}
+                onFacebook={() => {}}
+                onMicrosoft={() => {}}
             />
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-            <View style={{ marginBottom: 15 }}>
-            <Button title="Login" onPress={handleLogin} color="#007AFF" />
-            </View>
-            <View style={{ marginBottom: 15 }}>
-            <Button title="Go to Signup" onPress={() => navigation.navigate('Signup')} color="#007AFF" />
-            </View>
-        </View>
+            <Link onPress={() => navigation.navigate('Signup')} style={{ marginTop: 10 }}>
+                New to site? <Text style={{ textDecorationLine: 'underline', color: '#007AFF' }}>Register now</Text>
+            </Link>
+        </Container>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 20,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        padding: 10,
-        marginBottom: 10,
-        borderRadius: 5,
-    },
-    error: {
-        color: 'red',
-        marginBottom: 10,
-    },
-});
 
 export default LoginScreen;

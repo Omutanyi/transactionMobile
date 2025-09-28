@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, FlatList, ToastAndroid, Platform, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState, clearUser } from '../store';
+import { RootState } from '../redux/store';
+import { clearUser } from '../redux/userReducer';
 import { request } from '../requests';
 import apis from '../api';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { Container, ErrorText } from '../components/StyledComponents';
+import { useTheme } from '@emotion/react';
 
 interface Transaction {
   recipient: string;
@@ -17,6 +20,7 @@ interface Transaction {
 }
 
 const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const theme = useTheme();
   const user = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -82,8 +86,8 @@ const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   return (
     <View style={{ flex: 1, width: '100%' }}>
       <StatusBar style="auto" />
-      <View style={styles.container}>
-        <Text style={styles.text}>
+      <Container>
+        <Text style={[styles.text, { color: (theme as any).text }]}>
           Welcome to your Transaction Dashboard!
         </Text>
         <View style={{ width: '100%', marginBottom: 10 }}>
@@ -96,7 +100,7 @@ const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
         {toast && Platform.OS !== 'android' && (
-          <View style={styles.toast}><Text style={styles.toastText}>{toast}</Text></View>
+          <ErrorText>{toast}</ErrorText>
         )}
         <FlatList
           data={transactions}
@@ -145,7 +149,7 @@ const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           refreshing={refreshing}
           onRefresh={onRefresh}
         />
-      </View>
+      </Container>
     </View>
   );
 };

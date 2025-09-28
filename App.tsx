@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
 import { Provider, useSelector } from 'react-redux';
-import store, { RootState } from './store';
+import { ThemeProvider } from '@emotion/react';
+import store, { RootState } from './redux/store';
+import { setUser, clearUser } from './redux/userReducer';
 import SplashScreen from './screens/SplashScreen';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import SendPaymentScreen from './screens/SendPaymentScreen';
-
-const Stack = createStackNavigator();
+import MainNavigator from './navigation/MainNavigator';
+import { lightTheme, darkTheme } from './theme';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
 
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
@@ -22,29 +25,10 @@ export default function App() {
 
   return (
     <Provider store={store}>
-      <MainNavigator />
+      <ThemeProvider theme={theme}>
+        <MainNavigator />
+      </ThemeProvider>
     </Provider>
-  );
-}
-
-function MainNavigator() {
-  const user = useSelector((state: RootState) => state.user);
-  return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName={user && user.email ? "Dashboard" : "Login"}>
-        {user.email ? (
-          <>
-            <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: true }} />
-            <Stack.Screen name="SendPayment" component={SendPaymentScreen} options={{ title: 'Send Payment' }} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="Signup" component={SignupScreen} options={{ headerShown: false }} />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
   );
 }
 

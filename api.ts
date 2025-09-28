@@ -7,6 +7,8 @@ const { BASE_URL } = Constants.expoConfig?.extra as AppConfig;
 
 const baseUrl = BASE_URL || 'http://localhost:3000';
 
+console.log('API Base URL:', baseUrl);
+
 type ApiEndpoints = {
     login: string;
     signup: string;
@@ -14,16 +16,18 @@ type ApiEndpoints = {
     transactions: string;
     send: string;
     users: string;
+    getProfile: string;
     (endpoint: string): string;
 };
 
 const apis = ((endpoint: string) => `${baseUrl}${endpoint}`) as ApiEndpoints;
 
-apis.login = apis('/login');
-apis.signup = apis('/signup');
-apis.getUser = apis('/user');
-apis.transactions = apis('/transaction/transactions');
+apis.login = apis('/auth/login');
+apis.signup = apis('/auth/register');
+apis.getUser = apis('/auth/user');
+apis.transactions = apis('transaction/transactions');
 apis.send = apis('/transaction/send');
-apis.users = apis('/users');
+apis.users = apis('/auth/users');
+apis.getProfile = apis('/auth/profile');
 
 export default apis;
