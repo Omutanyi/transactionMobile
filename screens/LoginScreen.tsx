@@ -60,7 +60,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     return (
         <Container>
             <LogoWrapper>
-                <StyledImage source={require('../assets/transactlogo.png')} />
+                <StyledImage source={require('../assets/ic_launcher.png')} />
             </LogoWrapper>
             <Title>Login</Title>
             <InputWithIcon

@@ -4,11 +4,11 @@
     "slug": "Transaction Manager",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/transactlogo.png",
+    "icon": "./assets/ic_launcher.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/transactlogo.png",
+      "image": "./assets/ic_launcher.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/transactlogo.png",
+        "foregroundImage": "./assets/ic_launcher.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true

@@ -42,7 +42,7 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
     <Container>
       <View style={{ alignItems: 'center', marginBottom: 30 }}>
         <Image
-          source={require('../assets/transactlogo.png')}
+          source={require('../assets/ic_launcher.png')}
           style={{ width: 80, height: 80 }}
         />
       </View>

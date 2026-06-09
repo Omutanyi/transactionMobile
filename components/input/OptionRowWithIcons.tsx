@@ -20,7 +20,7 @@ export const IconWrapper = styled.View<{ theme?: AppTheme }>`
 `;
 
 export const OptionText = styled.Text<{ theme?: AppTheme }>`
-  font-size: 18px;
+  font-size: 15px;
   color: ${({ theme }) => theme?.text};
   flex: 1;
   margin-left: 8px;

@@ -9,7 +9,7 @@ const SplashScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
 
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/transactlogo.png')} style={styles.logo} />
+      <Image source={require('../assets/ic_launcher.png')} style={styles.logo} />
     </View>
   );
 };
