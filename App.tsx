@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { StyleSheet, useColorScheme } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider, useSelector } from 'react-redux';
 import { ThemeProvider } from '@emotion/react';
@@ -26,6 +26,7 @@ export default function App() {
   return (
     <Provider store={store}>
       <ThemeProvider theme={theme}>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         <MainNavigator />
       </ThemeProvider>
     </Provider>

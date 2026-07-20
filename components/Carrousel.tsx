@@ -21,34 +21,6 @@ interface CarouselItem {
   description: string;
 }
 
-// Dummy data for carousel
-const carouselData: CarouselItem[] = [
-  {
-    id: '1',
-    image: require('../assets/gaming.jpg'),
-    title: 'Gaming Tournaments',
-    description: 'Join exciting gaming competitions and win amazing prizes',
-  },
-  {
-    id: '2',
-    image: require('../assets/profile.jpg'),
-    title: 'Connect with Players',
-    description: 'Build your network and find teammates for your next match',
-  },
-  {
-    id: '3',
-    image: require('../assets/avatar.jpg'),
-    title: 'Track Your Progress',
-    description: 'Monitor your gaming stats and improve your performance',
-  },
-  {
-    id: '4',
-    image: require('../assets/gaming.jpg'),
-    title: 'Exclusive Rewards',
-    description: 'Unlock special rewards and achievements as you play',
-  },
-];
-
 interface CarouselProps {
   data?: CarouselItem[];
   autoSlide?: boolean;
@@ -57,7 +29,7 @@ interface CarouselProps {
 }
 
 const Carousel: React.FC<CarouselProps> = ({
-  data = carouselData,
+  data,
   autoSlide = true,
   slideInterval = 3000,
   height = 200,

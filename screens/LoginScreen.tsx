@@ -1,109 +1,212 @@
-import React, { useState } from 'react';
-import { Button, Text } from 'react-native';
-import { request } from '../requests';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import apis from '../api';
-import { RootState } from '../redux/store';
-import { setUser } from '../redux/userReducer';
-import { useDispatch } from 'react-redux';
-import { Container, LogoWrapper, StyledImage, ErrorText, ButtonWrapper, Title } from '../components/StyledComponents';
-import InputWithIcon from '../components/input/InputWithIcon';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import ButtonWithIcon from '../components/input/ButtonWithIcon';
-import Link from '../components/input/Link';
-import SocialLoginOptions from '../components/input/SocialLoginOptions';
-import styled from '@emotion/native';
+import { useTheme } from '@emotion/react';
+import { useDispatch } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { AppTheme } from '../theme';
+import { request } from '../requests';
+import apis from '../api';
+import { setUser } from '../redux/userReducer';
+import SocialAuthRow, { SocialProvider } from '../components/input/SocialAuthRow';
+import { createStyles } from './LoginScreen.styles';
+
+const REMEMBER_KEY = 'rememberedIdentifier';
 
 interface Props {
-    navigation: any;
+  navigation: any;
 }
 
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
-    const dispatch = useDispatch();
-    const [email, setEmail] = useState('');
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+  const dispatch = useDispatch();
+  const theme = useTheme() as AppTheme;
+  const insets = useSafeAreaInsets();
+  const styles = createStyles(theme, insets.top, insets.bottom);
 
-    const handleLogin = async () => {
-        try {
-            console.log('Attempting to login with:', { email, username, password, apisLogin: apis.login });
-            const data = await request(apis.login, {
-                method: 'POST',
-                body: JSON.stringify({ email, username, password }),
-            });
-            if (data && data.token) {
-                await AsyncStorage.setItem('jwt', data.token);
-                // Fetch user profile after login
-                const profile = await request(apis.getProfile, {
-                    method: 'GET',
-                    headers: { Authorization: `Bearer ${data.token}` },
-                });
-                dispatch(setUser({
-                    email: profile?.Email,
-                    username: profile?.Username,
-                    role: profile?.role?.RoleName,
-                    ...profile,
-                }));
-                if (profile?.role?.RoleName !== 'Admin') {
-                    navigation.navigate('AdminDashboard');
-                } else {
-                    navigation.navigate('UserDashboard');
-                }
-            }
-        } catch (e: any) {
-            setError(e?.message || 'An unexpected error occurred');
-            console.error('Login error:', e);
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Prefill a remembered identifier on mount.
+  useEffect(() => {
+    (async () => {
+      const saved = await AsyncStorage.getItem(REMEMBER_KEY);
+      if (saved) {
+        setIdentifier(saved);
+        setRemember(true);
+      }
+    })();
+  }, []);
+
+  const handleLogin = async () => {
+    if (!identifier.trim() || !password) {
+      setError('Please enter your email/username and password.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      // The field accepts either an email or a username — send both so the
+      // backend can match on whichever it supports.
+      const isEmail = identifier.includes('@');
+      const data = await request(apis.login, {
+        method: 'POST',
+        body: JSON.stringify({
+          email: isEmail ? identifier.trim() : '',
+          username: isEmail ? '' : identifier.trim(),
+          password,
+        }),
+      });
+
+      if (data?.token) {
+        await AsyncStorage.setItem('jwt', data.token);
+        if (remember) {
+          await AsyncStorage.setItem(REMEMBER_KEY, identifier.trim());
+        } else {
+          await AsyncStorage.removeItem(REMEMBER_KEY);
         }
-    };
 
-    return (
-        <Container>
-            <LogoWrapper>
-                <StyledImage source={require('../assets/ic_launcher.png')} />
-            </LogoWrapper>
-            <Title>Login</Title>
-            <InputWithIcon
-                icon={<Ionicons name="person-outline" size={20} color="#888" />}
-                placeholder="Username"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-            />
-            {/* <InputWithIcon
-                icon={<Ionicons name="mail-outline" size={20} color="#888" />}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-            /> */}
-            <InputWithIcon
-                icon={<Ionicons name="lock-closed-outline" size={20} color="#888" />}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
-            {error ? <ErrorText>{error}</ErrorText> : null}
-            <Link onPress={() => navigation.navigate('ForgotPassword')}>Forgot password?</Link>
-            <ButtonWrapper>
-                <ButtonWithIcon
-                    title="Login"
-                    onPress={handleLogin}
-                    icon={<Ionicons name="log-in-outline" size={20} color="#fff" />}
-                    bgColor="#007AFF"
-                />
-            </ButtonWrapper>
-            <SocialLoginOptions
-                onGoogle={() => {}}
-                onFacebook={() => {}}
-                onMicrosoft={() => {}}
-            />
-            <Link onPress={() => navigation.navigate('Signup')} style={{ marginTop: 10 }}>
-                New to site? <Text style={{ textDecorationLine: 'underline', color: '#007AFF' }}>Register now</Text>
-            </Link>
-        </Container>
-    );
+        const profile = await request(apis.getProfile, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${data.token}` },
+        });
+        // Updating redux switches MainNavigator to the appropriate dashboard.
+        dispatch(
+          setUser({
+            email: profile?.Email,
+            username: profile?.Username,
+            role: profile?.role?.RoleName,
+            ...profile,
+          })
+        );
+      } else {
+        setError('Invalid credentials. Please try again.');
+      }
+    } catch (e: any) {
+      setError(e?.message || 'An unexpected error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSocial = (provider: SocialProvider) => {
+    setError(`${provider[0].toUpperCase()}${provider.slice(1)} login is coming soon.`);
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Brand */}
+        <View style={styles.brand}>
+          <View style={styles.logoBadge}>
+            <Ionicons name="game-controller" size={48} color={theme.primary} />
+          </View>
+          <Text style={styles.brandName}>
+            PRO<Text style={{ color: theme.info }}>GAMER</Text>
+          </Text>
+          <Text style={styles.brandTagline}>LEVEL UP YOUR GAME</Text>
+        </View>
+
+        {/* Identifier */}
+        <View style={styles.inputRow}>
+          <Ionicons name="person-outline" size={20} color={theme.subText} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Email or Username"
+            placeholderTextColor={theme.subText}
+            value={identifier}
+            onChangeText={setIdentifier}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+          />
+        </View>
+
+        {/* Password */}
+        <View style={styles.inputRow}>
+          <Ionicons name="lock-closed-outline" size={20} color={theme.subText} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor={theme.subText}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            autoCapitalize="none"
+          />
+          <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword((s) => !s)} hitSlop={8}>
+            <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={theme.subText} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Remember / Forgot */}
+        <View style={styles.metaRow}>
+          <TouchableOpacity style={styles.rememberRow} onPress={() => setRemember((r) => !r)} activeOpacity={0.7}>
+            <View style={[styles.checkbox, remember && styles.checkboxChecked]}>
+              {remember && <Ionicons name="checkmark" size={14} color="#fff" />}
+            </View>
+            <Text style={styles.rememberText}>Remember Me</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} hitSlop={8}>
+            <Text style={styles.forgotText}>Forgot Password?</Text>
+          </TouchableOpacity>
+        </View>
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        {/* Login */}
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin} activeOpacity={0.85} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.6)" style={styles.chevrons} />
+              <Text style={styles.loginButtonText}>LOGIN</Text>
+              <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.6)" style={styles.chevrons} />
+            </>
+          )}
+        </TouchableOpacity>
+
+        {/* Divider */}
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerLabel}>OR</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* Social */}
+        <SocialAuthRow layout="grid" onPress={handleSocial} />
+
+        {/* Footer */}
+        <View style={styles.footerRow}>
+          <Text style={styles.footerText}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Signup')} hitSlop={8}>
+            <Text style={styles.footerLink}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
 };
 
 export default LoginScreen;

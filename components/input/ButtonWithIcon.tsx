@@ -1,6 +1,8 @@
 import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, ViewStyle, TextStyle, View } from 'react-native';
+import { ActivityIndicator, ViewStyle, TextStyle, View } from 'react-native';
 import styled from '@emotion/native';
+import { useTheme } from '@emotion/react';
+import type { AppTheme } from '../../theme';
 
 const StyledButton = styled.TouchableOpacity<{ bgColor?: string }>`
   background-color: ${({ bgColor }) => bgColor || '#007AFF'};
@@ -33,21 +35,27 @@ const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
   title,
   onPress,
   icon,
-  color = '#fff',
-  bgColor = '#007AFF',
+  color,
+  bgColor,
   loading = false,
   style,
   textStyle,
   disabled = false,
-}) => (
-  <StyledButton onPress={onPress} bgColor={bgColor} style={style} disabled={disabled || loading} activeOpacity={0.8}>
-    {loading ? (
-      <ActivityIndicator color={color} style={{ marginLeft: icon ? 8 : 0 }} />
-    ) : (
-      <ButtonText color={color} style={[icon ? { marginLeft: 8 } : {}, textStyle]}>{title}</ButtonText>
-    )}
-    <View style={{ marginLeft: 10 }}>{icon}</View>
-  </StyledButton>
-);
+}) => {
+  const theme = useTheme() as AppTheme;
+  const resolvedBgColor = bgColor ?? theme.button;
+  const resolvedColor = color ?? theme.buttonText;
+
+  return (
+    <StyledButton onPress={onPress} bgColor={resolvedBgColor} style={style} disabled={disabled || loading} activeOpacity={0.8}>
+      {loading ? (
+        <ActivityIndicator color={resolvedColor} style={{ marginLeft: icon ? 8 : 0 }} />
+      ) : (
+        <ButtonText color={resolvedColor} style={[icon ? { marginLeft: 8 } : {}, textStyle]}>{title}</ButtonText>
+      )}
+      <View style={{ marginLeft: 10 }}>{icon}</View>
+    </StyledButton>
+  );
+};
 
 export default ButtonWithIcon;

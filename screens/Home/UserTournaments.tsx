@@ -1,301 +1,316 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '@emotion/react';
-import { Container, Title} from '../../components/StyledComponents';
-import { ScrollView, Image, View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-
-const gameOptions = ['All Games', 'FIFA', 'NBA', 'Fortnite', 'Valorant', 'COD', 'Chess'];
-
-const dummyTournaments = Array.from({ length: 30 }, (_, i) => ({
-  id: i + 1,
-  tournamentName: `Tournament ${i + 1}`,
-  gameName: ['FIFA', 'NBA', 'Fortnite', 'Valorant', 'COD', 'Chess'][i % 6],
-  poolPrize: `$${(1000 + i * 50).toLocaleString()}`,
-  startDate: `2025-10-${(i % 28) + 1}`,
-  endDate: `2025-11-${(i % 28) + 1}`,
-  status: ['ongoing', 'upcoming', 'history'][i % 3],
-  image: [require('../../assets/gaming.jpg'), require('../../assets/ic_launcher.png'), require('../../assets/avatar.jpg'), require('../../assets/profile.jpg'), require('../../assets/icon.png')][i % 5],
-  isMyTournament: true,
-}));
-
-const dummyFollowedTournaments = Array.from({ length: 20 }, (_, i) => ({
-  id: i + 31,
-  tournamentName: `Tournament ${i + 31}`,
-  gameName: ['FIFA', 'NBA', 'Fortnite', 'Valorant', 'COD', 'Chess'][i % 6],
-  playerName: `@${['ProGamer', 'EsportsKing', 'GameMaster', 'Champion', 'Legend'][i % 5]}${i + 1}`,
-  poolPrize: `$${(2000 + i * 100).toLocaleString()}`,
-  startDate: `2025-12-${(i % 28) + 1}`,
-  endDate: `2025-12-${(i % 28) + 15}`,
-  status: ['ongoing', 'upcoming', 'history'][i % 3],
-  image: [require('../../assets/gaming.jpg'), require('../../assets/ic_launcher.png'), require('../../assets/avatar.jpg'), require('../../assets/profile.jpg'), require('../../assets/icon.png')][i % 5],
-  isMyTournament: false,
-}));
-
-const TournamentCard = ({ tournament, theme }: any) => (
-  <View style={{
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.inputBackground,
-    padding: 12,
-    shadowRadius: 4,
-    borderBottomWidth: 1, borderColor: '#eee'
-  }}>
-    <Image source={tournament.image} style={{ width: 70, height: 70, borderRadius: 12, marginRight: 16 }} />
-    <View style={{ flex: 1 }}>
-      <Text style={{ fontSize: 16, fontWeight: '600' }}>{tournament.tournamentName}</Text>
-      {tournament.isMyTournament ? (
-        <Text style={{ color: '#666', fontSize: 15 }}>{tournament.gameName}</Text>
-      ) : (
-        <Text style={{ color: '#666', fontSize: 15 }}>By {tournament.playerName} • {tournament.gameName}</Text>
-      )}
-      <Text style={{ color: theme.success, fontSize: 15 }}>Prize: {tournament.poolPrize}</Text>
-      <Text style={{ color: theme.text, fontSize: 13 }}>Start: {tournament.startDate} | End: {tournament.endDate}</Text>
-      {!tournament.isMyTournament && (
-        <View style={{ 
-          backgroundColor: '#007AFF10', 
-          paddingHorizontal: 8, 
-          paddingVertical: 2, 
-          borderRadius: 12, 
-          alignSelf: 'flex-start',
-          marginTop: 4
-        }}>
-          <Text style={{ color: '#007AFF', fontSize: 11, fontWeight: '600' }}>FOLLOWING</Text>
-        </View>
-      )}
-    </View>
-  </View>
-);
-
-const OngoingTournamentsTab = ({ selectedGame }: { selectedGame: string }) => {
-  const theme = useTheme();
-  const filteredTournaments = dummyTournaments.filter(t => 
-    t.status === 'ongoing' && (selectedGame === 'All Games' || t.gameName === selectedGame)
-  );
-  
-  return (
-    <Container>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {filteredTournaments.map(tournament => (
-          <TournamentCard key={tournament.id} tournament={tournament} theme={theme} />
-        ))}
-      </ScrollView>
-    </Container>
-  );
-};
-
-const UpcomingTournamentsTab = ({ selectedGame }: { selectedGame: string }) => {
-  const theme = useTheme();
-  const filteredTournaments = dummyTournaments.filter(t => 
-    t.status === 'upcoming' && (selectedGame === 'All Games' || t.gameName === selectedGame)
-  );
-  
-  return (
-    <Container>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {filteredTournaments.map(tournament => (
-          <TournamentCard key={tournament.id} tournament={tournament} theme={theme} />
-        ))}
-      </ScrollView>
-    </Container>
-  );
-};
-
-const HistoryTournamentsTab = ({ selectedGame }: { selectedGame: string }) => {
-  const theme = useTheme();
-  const filteredTournaments = dummyTournaments.filter(t => 
-    t.status === 'history' && (selectedGame === 'All Games' || t.gameName === selectedGame)
-  );
-  
-  return (
-    <Container>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {filteredTournaments.map(tournament => (
-          <TournamentCard key={tournament.id} tournament={tournament} theme={theme} />
-        ))}
-      </ScrollView>
-    </Container>
-  );
-};
-
-const FollowingTournamentsTab = ({ selectedGame }: { selectedGame: string }) => {
-  const theme = useTheme();
-  const allFollowedTournaments = [...dummyFollowedTournaments];
-  const filteredTournaments = allFollowedTournaments.filter(t => 
-    selectedGame === 'All Games' || t.gameName === selectedGame
-  );
-  
-  return (
-    <Container>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {filteredTournaments.length > 0 ? (
-          filteredTournaments.map(tournament => (
-            <TournamentCard key={tournament.id} tournament={tournament} theme={theme} />
-          ))
-        ) : (
-          <View style={{ padding: 20, alignItems: 'center' }}>
-            <Ionicons name="people-outline" size={48} color={'#666'} />
-            <Text style={{ color: '#666', fontSize: 16, marginTop: 12, textAlign: 'center' }}>
-              No tournaments from followed players
-            </Text>
-            <Text style={{ color: '#666', fontSize: 14, marginTop: 4, textAlign: 'center' }}>
-              Follow players to see their tournaments here
-            </Text>
-          </View>
-        )}
-      </ScrollView>
-    </Container>
-  );
-};
-
-const Tab = createMaterialTopTabNavigator();
-
-const UserTournamentsContent = ({ selectedGame }: { selectedGame: string }) => {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarStyle: { height: 60 },
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#666',
-        tabBarIndicatorStyle: { backgroundColor: '#007AFF' },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
-        tabBarScrollEnabled: true,
-      }}
-    >
-      <Tab.Screen name="Ongoing">
-        {() => <OngoingTournamentsTab selectedGame={selectedGame} />}
-      </Tab.Screen>
-      <Tab.Screen name="Upcoming">
-        {() => <UpcomingTournamentsTab selectedGame={selectedGame} />}
-      </Tab.Screen>
-      <Tab.Screen name="History">
-        {() => <HistoryTournamentsTab selectedGame={selectedGame} />}
-      </Tab.Screen>
-      <Tab.Screen name="Following">
-        {() => <FollowingTournamentsTab selectedGame={selectedGame} />}
-      </Tab.Screen>
-    </Tab.Navigator>
-  );
-};
-
-const GameDropdown = ({ selectedGame, onGameSelect, theme }: any) => {
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  return (
-    <View style={{ marginRight: 10 }}>
-      <TouchableOpacity
-        onPress={() => setShowDropdown(!showDropdown)}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 12,
-          paddingVertical: 6,
-          backgroundColor: theme.inputBackground,
-          borderRadius: 8,
-          borderWidth: 1,
-          borderColor: '#ddd',
-        }}
-      >
-        <Text style={{ color: theme.text, fontSize: 14, marginRight: 4 }}>
-          {selectedGame}
-        </Text>
-        <Ionicons 
-          name={showDropdown ? "chevron-up" : "chevron-down"} 
-          size={16} 
-          color={theme.text} 
-        />
-      </TouchableOpacity>
-      
-      {showDropdown && (
-        <View style={{
-          position: 'absolute',
-          top: 40,
-          right: 0,
-          backgroundColor: theme.inputBackground,
-          borderRadius: 8,
-          borderWidth: 1,
-          borderColor: '#ddd',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 5,
-          zIndex: 1000,
-          minWidth: 120,
-        }}>
-          {gameOptions.map((game, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => {
-                onGameSelect(game);
-                setShowDropdown(false);
-              }}
-              style={{
-                padding: 12,
-                borderBottomWidth: index < gameOptions.length - 1 ? 1 : 0,
-                borderBottomColor: '#eee',
-              }}
-            >
-              <Text style={{ 
-                color: selectedGame === game ? '#007AFF' : theme.text,
-                fontSize: 14,
-                fontWeight: selectedGame === game ? '600' : '400'
-              }}>
-                {game}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-};
+import { useNavigation } from '@react-navigation/native';
+import { AppTheme } from '../../theme';
+import { createStyles, getHeaderOptions, RANK_COLORS, RankKey } from './UserTournaments.styles';
+import AppLogo from '../../components/AppLogo';
+import TournamentDetails from '../Tournaments/TournamentDetails';
 
 const Stack = createStackNavigator();
 
-const logo = require('../../assets/ic_launcher.png');
+// ── Static data ───────────────────────────────────────────────────
 
-const TournamentScreenWrapper = () => {
-  const [selectedGame, setSelectedGame] = useState('All Games');
-  return <UserTournamentsContent selectedGame={selectedGame} />;
+const CATEGORIES: { id: string; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { id: 'all', label: 'All', icon: 'apps-outline' },
+  { id: 'fps', label: 'FPS', icon: 'radio-button-on-outline' },
+  { id: 'moba', label: 'MOBA', icon: 'people-outline' },
+  { id: 'sports', label: 'Sports', icon: 'football-outline' },
+  { id: 'strategy', label: 'Strategy', icon: 'bulb-outline' },
+];
+
+interface Tournament {
+  id: number;
+  name: string;
+  game: string;
+  category: string;
+  prize: number;
+  entryFee: number;
+  players: number;
+  maxPlayers: number;
+  date: string;
+  rank: RankKey;
+  image: any;
+}
+
+const TOURNAMENTS: Tournament[] = [
+  {
+    id: 1, name: 'Valorant Showdown', game: 'Valorant', category: 'fps',
+    prize: 2500, entryFee: 10, players: 128, maxPlayers: 256,
+    date: 'Today, 8:00 PM', rank: 'BRONZE',
+    image: require('../../assets/gaming.jpg'),
+  },
+  {
+    id: 2, name: 'FIFA Mobile Cup', game: 'FIFA Mobile', category: 'sports',
+    prize: 1500, entryFee: 5, players: 96, maxPlayers: 192,
+    date: 'Tomorrow, 6:00 PM', rank: 'SILVER',
+    image: require('../../assets/profile.jpg'),
+  },
+  {
+    id: 3, name: 'CODM Elite Cup', game: 'Call of Duty', category: 'fps',
+    prize: 2000, entryFee: 8, players: 200, maxPlayers: 256,
+    date: 'May 25, 7:00 PM', rank: 'GOLD',
+    image: require('../../assets/avatar.jpg'),
+  },
+  {
+    id: 4, name: 'League Champions', game: 'League of Legends', category: 'moba',
+    prize: 3000, entryFee: 15, players: 64, maxPlayers: 128,
+    date: 'May 26, 4:00 PM', rank: 'GOLD',
+    image: require('../../assets/icon.png'),
+  },
+  {
+    id: 5, name: 'NBA 2K Pro Cup', game: 'NBA 2K24', category: 'sports',
+    prize: 1000, entryFee: 5, players: 48, maxPlayers: 64,
+    date: 'May 27, 8:00 PM', rank: 'BRONZE',
+    image: require('../../assets/gaming.jpg'),
+  },
+];
+
+// ── Content Screen ─────────────────────────────────────────────────
+
+const UserTournamentsContent = () => {
+  const theme = useTheme() as AppTheme;
+  const styles = createStyles(theme);
+  const navigation = useNavigation<any>();
+
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [countdown, setCountdown] = useState({ days: 2, hrs: 14, mins: 32, secs: 45 });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        let { days, hrs, mins, secs } = prev;
+        if (days === 0 && hrs === 0 && mins === 0 && secs === 0) return prev;
+        secs -= 1;
+        if (secs < 0) { secs = 59; mins -= 1; }
+        if (mins < 0) { mins = 59; hrs -= 1; }
+        if (hrs < 0) { hrs = 23; days -= 1; }
+        return { days, hrs, mins, secs };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const filtered = selectedCategory === 'all'
+    ? TOURNAMENTS
+    : TOURNAMENTS.filter(t => t.category === selectedCategory);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return (
+    <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+
+      {/* ── Category Chips ── */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoriesContent}
+      >
+        {CATEGORIES.map(cat => {
+          const active = selectedCategory === cat.id;
+          return (
+            <TouchableOpacity
+              key={cat.id}
+              style={[styles.chip, active && styles.chipActive]}
+              onPress={() => setSelectedCategory(cat.id)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name={cat.icon} size={14} color={active ? '#fff' : theme.subText} />
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>{cat.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* ── Featured Tournament ── */}
+      <TouchableOpacity
+        style={styles.featuredCard}
+        activeOpacity={0.9}
+        onPress={() => navigation.navigate('TournamentDetails', {
+          tournament: {
+            name: 'Neon Championship', game: 'Valorant', prize: 5000,
+            entryFee: 10, players: 32, maxPlayers: 64,
+            image: require('../../assets/gaming.jpg'),
+          },
+        })}
+      >
+        <Image
+          source={require('../../assets/gaming.jpg')}
+          style={styles.featuredBg}
+          resizeMode="cover"
+        />
+        <View style={styles.featuredOverlay} />
+        <View style={styles.featuredContent}>
+          <View style={styles.badgesRow}>
+            <View style={styles.featuredBadge}>
+              <Text style={styles.featuredBadgeText}>★ FEATURED</Text>
+            </View>
+            <View style={styles.liveSoonBadge}>
+              <View style={styles.liveSoonDot} />
+              <Text style={styles.liveSoonText}>LIVE SOON</Text>
+            </View>
+          </View>
+
+          <Text style={styles.featuredTitle}>Neon Championship</Text>
+          <Text style={styles.featuredSubtitle}>The ultimate battle for glory!</Text>
+
+          <Text style={styles.prizePoolLabel}>PRIZE POOL</Text>
+          <Text style={styles.featuredPrize}>$5,000</Text>
+
+          <View style={styles.countdownRow}>
+            {[
+              { value: countdown.days, unit: 'DAYS' },
+              { value: countdown.hrs, unit: 'HRS' },
+              { value: countdown.mins, unit: 'MINS' },
+              { value: countdown.secs, unit: 'SECS' },
+            ].map((item, i) => (
+              <React.Fragment key={item.unit}>
+                {i > 0 && <Text style={styles.countdownSep}>:</Text>}
+                <View style={styles.countdownBox}>
+                  <Text style={styles.countdownValue}>{pad(item.value)}</Text>
+                  <Text style={styles.countdownUnit}>{item.unit}</Text>
+                </View>
+              </React.Fragment>
+            ))}
+          </View>
+        </View>
+      </TouchableOpacity>
+
+      {/* ── All Tournaments header ── */}
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionTitleRow}>
+          <Ionicons name="trophy-outline" size={16} color={theme.primary} />
+          <Text style={styles.sectionTitle}>All Tournaments</Text>
+        </View>
+        <TouchableOpacity style={styles.viewAll}>
+          <Text style={styles.viewAllText}>View All</Text>
+          <Ionicons name="chevron-forward" size={14} color={theme.primary} />
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Tournament Cards ── */}
+      {filtered.map(t => (
+        <TouchableOpacity
+          key={t.id}
+          style={styles.tournamentCard}
+          activeOpacity={0.9}
+          onPress={() => navigation.navigate('TournamentDetails', { tournament: t })}
+        >
+          {/* Left: game image + rank badge */}
+          <View style={styles.cardImageWrapper}>
+            <Image source={t.image} style={styles.cardImage} resizeMode="cover" />
+            <View style={[styles.rankBadge, { backgroundColor: RANK_COLORS[t.rank] }]}>
+              <Text style={styles.rankBadgeText}>{t.rank}</Text>
+            </View>
+          </View>
+
+          {/* Middle: name, prize, players */}
+          <View style={styles.cardBody}>
+            <Text style={styles.cardName} numberOfLines={1}>{t.name}</Text>
+            <View style={styles.cardPrizeRow}>
+              <View style={styles.dollarBadge}>
+                <Text style={styles.dollarBadgeText}>$</Text>
+              </View>
+              <Text style={styles.cardPrize}>{t.prize.toLocaleString()}</Text>
+            </View>
+            <View style={styles.cardPlayersRow}>
+              <Ionicons name="people-outline" size={12} color={theme.subText} />
+              <Text style={styles.cardPlayersText}>{t.players} / {t.maxPlayers}</Text>
+            </View>
+          </View>
+
+          {/* Right: date, entry fee, join button */}
+          <View style={styles.cardRight}>
+            <View style={styles.cardDateRow}>
+              <Ionicons name="calendar-outline" size={11} color={theme.subText} />
+              <Text style={styles.cardDateText}>{t.date}</Text>
+            </View>
+            <View style={styles.entryFeeBadge}>
+              <Text style={styles.entryFeeText}>${t.entryFee} ENTRY</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.joinBtn}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('TournamentDetails', { tournament: t })}
+            >
+              <Text style={styles.joinBtnText}>Join</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      ))}
+
+      {/* ── Bottom Invite Banner ── */}
+      <TouchableOpacity style={styles.bottomBanner} activeOpacity={0.85}>
+        <Ionicons name="gift-outline" size={22} color={theme.primary} />
+        <Text style={styles.bottomBannerText}>
+          Invite friends & get up to{' '}
+          <Text style={styles.bottomBannerHighlight}>$10</Text> bonus!
+        </Text>
+        <Ionicons name="chevron-forward" size={16} color={theme.subText} />
+      </TouchableOpacity>
+
+    </ScrollView>
+  );
 };
 
+// ── Stack Navigator ────────────────────────────────────────────────
+
 const UserTournaments = () => {
-  const theme = useTheme();
-  const [selectedGame, setSelectedGame] = useState('All Games');
-  
+  const theme = useTheme() as AppTheme;
+  const headerOpts = getHeaderOptions(theme);
+
   return (
     <Stack.Navigator
       screenOptions={{
+        ...headerOpts,
         headerShown: true,
         headerTitle: 'Tournaments',
         headerLeft: () => (
-          <Image
-            source={logo}
-            style={{ width: 32, height: 32, marginLeft: 16 }}
-          />
+          <View style={{ marginLeft: 16 }}>
+            <AppLogo iconOnly size="sm" />
+          </View>
         ),
         headerRight: () => (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <GameDropdown 
-              selectedGame={selectedGame}
-              onGameSelect={setSelectedGame}
-              theme={theme}
-            />
-            <Ionicons
-              name="notifications-outline"
-              size={28}
-              color={'#007AFF'}
-              style={{ marginRight: 16 }}
-            />
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+            <Ionicons name="options-outline" size={18} color={theme.text} style={{ marginRight: 6 }} />
+            <Text style={{ color: theme.text, fontSize: 13, fontWeight: '500' }}>All Regions</Text>
+            <Ionicons name="chevron-down" size={13} color={theme.subText} style={{ marginLeft: 3 }} />
           </View>
         ),
       }}
     >
-      <Stack.Screen name="Tournaments">
-        {() => <UserTournamentsContent selectedGame={selectedGame} />}
-      </Stack.Screen>
+      <Stack.Screen name="Tournaments" component={UserTournamentsContent} />
+      <Stack.Screen
+        name="TournamentDetails"
+        component={TournamentDetails}
+        options={({ navigation }) => ({
+          headerTitle: 'Tournament Details',
+          headerTitleAlign: 'center',
+          headerLeft: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={{ padding: 4, marginRight: 4 }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="chevron-back" size={24} color={theme.text} />
+              </TouchableOpacity>
+              <AppLogo iconOnly size="sm" />
+            </View>
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="share-social-outline" size={20} color={theme.text} />
+              <Text style={{ color: theme.text, fontSize: 13, fontWeight: '600', marginLeft: 5 }}>Share</Text>
+            </TouchableOpacity>
+          ),
+        })}
+      />
     </Stack.Navigator>
   );
 };

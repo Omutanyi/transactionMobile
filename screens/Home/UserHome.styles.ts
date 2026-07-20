@@ -1,0 +1,427 @@
+import { StyleSheet, Platform } from 'react-native';
+import { AppTheme } from '../../theme';
+
+export const createStyles = (theme: AppTheme, topInset: number = 0) =>
+  StyleSheet.create({
+    scroll: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+
+    // ── Welcome Header ──────────────────────────────────────────
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingTop: topInset + (Platform.OS === 'ios' ? 8 : 12),
+      paddingBottom: 14,
+      backgroundColor: theme.background,
+    },
+    avatarWrapper: {
+      position: 'relative',
+      marginRight: 12,
+    },
+    headerAvatar: {
+      width: 54,
+      height: 54,
+      borderRadius: 27,
+      borderWidth: 2,
+      borderColor: theme.primary,
+    },
+    onlineDot: {
+      position: 'absolute',
+      bottom: 1,
+      right: 1,
+      width: 13,
+      height: 13,
+      borderRadius: 7,
+      backgroundColor: theme.success,
+      borderWidth: 2,
+      borderColor: theme.background,
+    },
+    welcomeBlock: {
+      flex: 1,
+    },
+    welcomeSmall: {
+      fontSize: 11,
+      color: theme.subText,
+      letterSpacing: 1.5,
+      fontWeight: '600',
+    },
+    welcomeName: {
+      fontSize: 26,
+      fontWeight: 'bold',
+      color: theme.rankGold,
+      letterSpacing: 1,
+      lineHeight: 30,
+    },
+    welcomeSub: {
+      fontSize: 12,
+      color: theme.subText,
+      marginTop: 1,
+    },
+
+    // ── Action Cards ─────────────────────────────────────────────
+    actionRow: {
+      flexDirection: 'row',
+      paddingHorizontal: 16,
+      marginBottom: 14,
+      gap: 12,
+    },
+    actionCard: {
+      flex: 1,
+      borderRadius: 16,
+      padding: 16,
+      backgroundColor: theme.card,
+      borderWidth: 1.5,
+      minHeight: 148,
+      overflow: 'hidden',
+    },
+    actionCardCyan: {
+      borderColor: theme.info,
+      shadowColor: theme.info,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.35,
+      shadowRadius: 10,
+      elevation: 6,
+    },
+    actionCardPurple: {
+      borderColor: theme.secondary,
+      shadowColor: theme.secondary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.35,
+      shadowRadius: 10,
+      elevation: 6,
+    },
+    actionIconWrapper: {
+      marginBottom: 10,
+    },
+    actionTitle: {
+      fontSize: 15,
+      fontWeight: 'bold',
+      color: theme.text,
+      letterSpacing: 0.5,
+    },
+    actionSubtitle: {
+      fontSize: 11,
+      color: theme.subText,
+      marginTop: 3,
+      lineHeight: 16,
+    },
+    actionArrowCyan: {
+      position: 'absolute',
+      bottom: 14,
+      right: 14,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: theme.info,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    actionArrowPurple: {
+      position: 'absolute',
+      bottom: 14,
+      right: 14,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: theme.secondary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    // ── Full-width section cards ──────────────────────────────────
+    sectionCard: {
+      marginHorizontal: 16,
+      marginBottom: 14,
+      backgroundColor: theme.card,
+      borderRadius: 16,
+      padding: 14,
+    },
+
+    // Section card header row (title + VIEW ALL)
+    colHeaderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    colTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    colTitle: {
+      fontSize: 11,
+      fontWeight: 'bold',
+      color: theme.text,
+      letterSpacing: 1,
+      marginLeft: 4,
+    },
+    viewAllText: {
+      fontSize: 10,
+      color: theme.primary,
+      fontWeight: '600',
+    },
+
+    // Live Activity items (full width — bigger thumbs)
+    activityItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    activityThumb: {
+      width: 52,
+      height: 52,
+      borderRadius: 10,
+      marginRight: 12,
+    },
+    activityUsername: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      color: theme.text,
+    },
+    activityAction: {
+      fontSize: 12,
+      color: theme.subText,
+      marginTop: 1,
+    },
+    activityTime: {
+      fontSize: 10,
+      color: theme.subText,
+      marginTop: 2,
+    },
+    activityGame: {
+      fontSize: 10,
+      color: theme.primary,
+      fontWeight: '600',
+      marginTop: 2,
+    },
+
+    // Quick Stats (full-width card)
+    statsTitle: {
+      fontSize: 11,
+      fontWeight: 'bold',
+      color: theme.text,
+      letterSpacing: 1,
+      marginBottom: 12,
+    },
+    statsInnerRow: {
+      flexDirection: 'row',
+      gap: 12,
+      marginBottom: 12,
+    },
+    statsHalfCol: {
+      flex: 1,
+      backgroundColor: theme.statCard,
+      borderRadius: 12,
+      padding: 10,
+    },
+    streakSection: {
+      marginBottom: 0,
+    },
+    streakLabel: {
+      fontSize: 9,
+      color: theme.subText,
+      letterSpacing: 0.8,
+      marginBottom: 2,
+    },
+    streakRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    streakNumber: {
+      fontSize: 30,
+      fontWeight: 'bold',
+      color: theme.text,
+      marginRight: 4,
+      lineHeight: 34,
+    },
+    streakSub: {
+      fontSize: 9,
+      color: theme.subText,
+      marginTop: 2,
+    },
+    rankSection: {
+      marginBottom: 10,
+    },
+    rankLabel: {
+      fontSize: 9,
+      color: theme.subText,
+      letterSpacing: 0.8,
+      marginBottom: 4,
+    },
+    rankNameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 6,
+    },
+    rankNameText: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: theme.info,
+      marginLeft: 4,
+    },
+    rankBar: {
+      height: 6,
+      backgroundColor: theme.border,
+      borderRadius: 3,
+      overflow: 'hidden',
+      marginBottom: 3,
+    },
+    rankBarFill: {
+      height: '100%',
+      backgroundColor: theme.info,
+      borderRadius: 3,
+    },
+    rankRpText: {
+      fontSize: 8,
+      color: theme.subText,
+    },
+    miniStatsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+      paddingTop: 8,
+    },
+    miniStat: {
+      alignItems: 'center',
+    },
+    miniStatValue: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: theme.text,
+      marginTop: 2,
+    },
+    miniStatLabel: {
+      fontSize: 8,
+      color: theme.subText,
+    },
+
+    // ── Featured Tournament ──────────────────────────────────────
+    featuredCard: {
+      marginHorizontal: 16,
+      marginBottom: 28,
+      borderRadius: 16,
+      overflow: 'hidden',
+      minHeight: 165,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.rankGold,
+      backgroundColor: theme.card,
+    },
+    featuredBgImage: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: '100%',
+      height: '100%',
+    },
+    featuredOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.68)',
+    },
+    featuredBody: {
+      flex: 1,
+      padding: 16,
+      zIndex: 1,
+    },
+    liveBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(52,199,89,0.2)',
+      borderWidth: 1,
+      borderColor: theme.success,
+      borderRadius: 12,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      alignSelf: 'flex-start',
+      marginBottom: 8,
+    },
+    liveDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: theme.success,
+      marginRight: 5,
+    },
+    liveBadgeText: {
+      fontSize: 9,
+      fontWeight: 'bold',
+      color: theme.success,
+      letterSpacing: 0.8,
+    },
+    featuredTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#fff',
+      letterSpacing: 0.5,
+      marginBottom: 3,
+    },
+    featuredSubtitle: {
+      fontSize: 10,
+      color: 'rgba(255,255,255,0.65)',
+      marginBottom: 10,
+    },
+    prizeLabel: {
+      fontSize: 9,
+      color: 'rgba(255,255,255,0.55)',
+      letterSpacing: 1,
+    },
+    prizeAmount: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: theme.rankGold,
+      marginBottom: 12,
+    },
+    joinBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.primary,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 8,
+      alignSelf: 'flex-start',
+    },
+    joinBtnText: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: '#fff',
+      marginRight: 4,
+      letterSpacing: 0.5,
+    },
+    featuredBadge: {
+      width: 80,
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1,
+    },
+    featuredBadgeBox: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(212,175,55,0.15)',
+      borderWidth: 1,
+      borderColor: theme.rankGold,
+      borderRadius: 12,
+      padding: 10,
+    },
+    featuredBadgeText: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: theme.rankGold,
+      textAlign: 'center',
+      marginTop: 4,
+      letterSpacing: 1,
+      lineHeight: 14,
+    },
+  });

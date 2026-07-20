@@ -17,6 +17,8 @@ type ApiEndpoints = {
     send: string;
     users: string;
     getProfile: string;
+    updateProfile: string;
+    games: string;
     (endpoint: string): string;
 };
 
@@ -29,5 +31,7 @@ apis.transactions = apis('transaction/transactions');
 apis.send = apis('/transaction/send');
 apis.users = apis('/auth/users');
 apis.getProfile = apis('/auth/profile');
+apis.updateProfile = apis('/auth/profile');
+apis.games = apis('/game');
 
 export default apis;
