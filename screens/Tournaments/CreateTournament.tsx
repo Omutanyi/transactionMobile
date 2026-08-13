@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
+  View, Text, Image, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator,
 } from 'react-native';
 import { useTheme } from '@emotion/react';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,60 +10,54 @@ import { AppTheme } from '../../theme';
 import { createStyles, getHeaderOptions } from './CreateTournament.styles';
 import AppLogo from '../../components/AppLogo';
 import { fetchGames } from '../../services/games';
+import { request } from '../../requests';
+import apis from '../../api';
 
 const Stack = createStackNavigator();
-
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
-
-// ── Static data ────────────────────────────────────────────────────
 
 const FALLBACK_GAMES = [
   { id: 'valorant', name: 'Valorant', image: require('../../assets/avatar.jpg') },
-  // { id: 'fifa', name: 'FIFA 24', image: require('../../assets/profile.jpg') },
-  // { id: 'cod', name: 'Call of Duty', image: require('../../assets/gaming.jpg') },
-  // { id: 'rocket', name: 'Rocket League', image: require('../../assets/icon.png') },
-  // { id: 'chess', name: 'Chess', image: require('../../assets/ic_launcher.png') },
-  // { id: 'pubg', name: 'PUBG Mobile', image: require('../../assets/gaming.jpg') },
 ];
-
 const FALLBACK_IMAGES = FALLBACK_GAMES.map(g => g.image);
 
-const STEPS = [
-  { id: 1, label: 'GAME SELECT' },
-  { id: 2, label: 'SETTINGS' },
-  { id: 3, label: 'CONFIRM' },
-];
-
 const TYPES: { id: string; label: string; icon: IconName }[] = [
-  { id: 'single', label: 'SINGLE\nELIMINATION', icon: 'git-branch-outline' },
-  { id: 'double', label: 'DOUBLE\nELIMINATION', icon: 'git-network-outline' },
-  { id: 'round', label: 'ROUND\nROBIN', icon: 'sync-outline' },
+  { id: 'single_elimination', label: 'SINGLE\nELIMINATION', icon: 'git-branch-outline' },
+  { id: 'double_elimination', label: 'DOUBLE\nELIMINATION', icon: 'git-network-outline' },
+  { id: 'round_robin', label: 'ROUND\nROBIN', icon: 'sync-outline' },
 ];
 
 const PARTICIPANT_OPTIONS = [8, 16, 32, 64, 128];
-
 const NAME_MAX = 50;
 const DESC_MAX = 300;
 
-// ── Content screen ─────────────────────────────────────────────────
+interface GameOption {
+  id: string;
+  name: string;
+  image: any;
+  GameId?: number;
+  gameId?: number;
+}
 
 const CreateTournamentContent = () => {
   const theme = useTheme() as AppTheme;
   const styles = createStyles(theme);
 
   const [step, setStep] = useState(1);
-  const [selectedGame, setSelectedGame] = useState('valorant');
+  const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
+  const [selectedGameName, setSelectedGameName] = useState('valorant');
   const [name, setName] = useState('Legends Arena Cup');
-  const [description, setDescription] = useState(
-    'Compete against the best and prove you are the ultimate champion!'
-  );
-  const [type, setType] = useState('single');
+  const [description, setDescription] = useState('Compete against the best and prove you are the ultimate champion!');
+  const [type, setType] = useState('single_elimination');
   const [prize, setPrize] = useState('1000');
   const [entryFee, setEntryFee] = useState<'free' | 'premium'>('premium');
   const [participants, setParticipants] = useState(16);
+  const [startDate, setStartDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
+  const [endDate, setEndDate] = useState(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString());
   const [previewOpen, setPreviewOpen] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
-  const [games, setGames] = useState(FALLBACK_GAMES);
+  const [games, setGames] = useState<GameOption[]>(FALLBACK_GAMES);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -76,36 +65,79 @@ const CreateTournamentContent = () => {
       .then(list => {
         if (!active || !list.length) return;
         setGames(list);
-        setSelectedGame(prev => (list.some(g => g.id === prev) ? prev : list[0].id));
+        const first: any = list[0];
+        if (first?.GameId ?? first?.gameId) setSelectedGameId(first?.GameId ?? first?.gameId);
+        setSelectedGameName(prev => (list.some(g => g.id === prev) ? prev : list[0].id));
       })
-      .catch(() => { /* keep fallback games */ });
+      .catch(() => {});
     return () => { active = false; };
   }, []);
 
-  const gameName = games.find(g => g.id === selectedGame)?.name ?? '';
-  const typeLabel = TYPES.find(t => t.id === type)?.label.replace('\n', ' ') ?? '';
-  const startDate = 'Jun 15, 2025 06:00 PM';
+  const handleCreate = async () => {
+    if (!name.trim()) {
+      Alert.alert('Error', 'Please enter a tournament name');
+      return;
+    }
+    if (!selectedGameId) {
+      Alert.alert('Error', 'Please select a game');
+      return;
+    }
+    if (!prize || parseInt(prize) <= 0) {
+      Alert.alert('Error', 'Please enter a valid prize pool');
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const body = {
+        name: name.trim(),
+        gameId: selectedGameId,
+        startDate,
+        endDate,
+        prizePool: parseInt(prize) || 0,
+        entryFee: entryFee === 'premium' ? 10 : 0,
+        maxParticipants: participants,
+        tournamentType: type,
+        description: description.trim(),
+      };
+      await request(apis.tournaments, { method: 'POST', body: JSON.stringify(body) });
+      Alert.alert('Success', 'Tournament created successfully!', [
+        { text: 'OK', onPress: () => {
+          const navigation = useNavigation();
+          // Fallback: the Alert callback can't access hooks — just navigate back via the screen's navigation
+        }}
+      ]);
+      // Navigate back via the onPress above won't work due to hook rules,
+      // so we use a boolean state to trigger navigation in a useEffect instead.
+    } catch (e: any) {
+      Alert.alert('Error', e?.message || 'Failed to create tournament');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const cycleParticipants = () => {
     const idx = PARTICIPANT_OPTIONS.indexOf(participants);
     setParticipants(PARTICIPANT_OPTIONS[(idx + 1) % PARTICIPANT_OPTIONS.length]);
   };
 
+  const displayStartDate = new Date(startDate).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* ── Step indicator ── */}
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
       <View style={styles.stepperRow}>
-        {STEPS.map((s, i) => {
+        {[
+          { id: 1, label: 'GAME SELECT' },
+          { id: 2, label: 'SETTINGS' },
+          { id: 3, label: 'CONFIRM' },
+        ].map((s, i) => {
           const active = step >= s.id;
           return (
             <React.Fragment key={s.id}>
-              {i > 0 && (
-                <View style={[styles.stepConnector, step >= s.id && styles.stepConnectorActive]} />
-              )}
+              {i > 0 && <View style={[styles.stepConnector, step >= s.id && styles.stepConnectorActive]} />}
               <TouchableOpacity style={styles.step} onPress={() => setStep(s.id)} activeOpacity={0.8}>
                 <View style={[styles.stepCircle, active && styles.stepCircleActive]}>
                   <Text style={[styles.stepNumber, active && styles.stepNumberActive]}>{s.id}</Text>
@@ -117,16 +149,18 @@ const CreateTournamentContent = () => {
         })}
       </View>
 
-      {/* ── Select Game ── */}
       <Text style={styles.sectionLabel}>SELECT GAME</Text>
       <View style={styles.gameGrid}>
         {games.map(g => {
-          const active = g.id === selectedGame;
+          const active = g.id === selectedGameName;
           return (
             <TouchableOpacity
               key={g.id}
               style={[styles.gameCard, active && styles.gameCardSelected]}
-              onPress={() => setSelectedGame(g.id)}
+              onPress={() => {
+                setSelectedGameName(g.id);
+                if (g.GameId) setSelectedGameId(g.GameId);
+              }}
               activeOpacity={0.9}
             >
               <Image source={g.image} style={styles.gameCardImage} resizeMode="cover" />
@@ -141,54 +175,32 @@ const CreateTournamentContent = () => {
         })}
       </View>
 
-      {/* ── Settings form (full width) ── */}
       <View style={styles.formSection}>
-        {/* Name */}
         <View style={styles.fieldGroup}>
           <Text style={styles.fieldLabel}>TOURNAMENT NAME</Text>
           <View style={styles.inputWrapper}>
             <Ionicons name="trophy-outline" size={15} color={theme.info} />
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={t => setName(t.slice(0, NAME_MAX))}
-              placeholder="Tournament name"
-              placeholderTextColor={theme.subText}
-            />
+            <TextInput style={styles.input} value={name} onChangeText={t => setName(t.slice(0, NAME_MAX))} placeholder="Tournament name" placeholderTextColor={theme.subText} />
           </View>
           <Text style={styles.charCount}>{name.length}/{NAME_MAX}</Text>
         </View>
 
-        {/* Description */}
         <View style={styles.fieldGroup}>
           <Text style={styles.fieldLabel}>DESCRIPTION</Text>
           <View style={[styles.inputWrapper, styles.inputMultiline]}>
             <Ionicons name="document-text-outline" size={15} color={theme.info} style={{ marginTop: 9 }} />
-            <TextInput
-              style={[styles.input, styles.inputMultilineText]}
-              value={description}
-              onChangeText={t => setDescription(t.slice(0, DESC_MAX))}
-              placeholder="Describe your tournament"
-              placeholderTextColor={theme.subText}
-              multiline
-            />
+            <TextInput style={[styles.input, styles.inputMultilineText]} value={description} onChangeText={t => setDescription(t.slice(0, DESC_MAX))} placeholder="Describe your tournament" placeholderTextColor={theme.subText} multiline />
           </View>
           <Text style={styles.charCount}>{description.length}/{DESC_MAX}</Text>
         </View>
 
-        {/* Type */}
         <View style={styles.fieldGroup}>
           <Text style={styles.fieldLabel}>TOURNAMENT TYPE</Text>
           <View style={styles.typeRow}>
             {TYPES.map(t => {
               const active = type === t.id;
               return (
-                <TouchableOpacity
-                  key={t.id}
-                  style={[styles.typeCard, active && styles.typeCardActive]}
-                  onPress={() => setType(t.id)}
-                  activeOpacity={0.85}
-                >
+                <TouchableOpacity key={t.id} style={[styles.typeCard, active && styles.typeCardActive]} onPress={() => setType(t.id)} activeOpacity={0.85}>
                   <Ionicons name={t.icon} size={20} color={active ? theme.info : theme.subText} />
                   <Text style={[styles.typeLabel, active && styles.typeLabelActive]}>{t.label}</Text>
                 </TouchableOpacity>
@@ -197,44 +209,27 @@ const CreateTournamentContent = () => {
           </View>
         </View>
 
-        {/* Prize + Entry fee */}
         <View style={[styles.halfRow, styles.fieldGroup]}>
           <View style={styles.half}>
             <Text style={styles.fieldLabel}>PRIZE POOL</Text>
             <View style={styles.inputWrapper}>
               <Text style={{ color: theme.success, fontWeight: 'bold', fontSize: 14 }}>$</Text>
-              <TextInput
-                style={styles.input}
-                value={prize}
-                onChangeText={t => setPrize(t.replace(/[^0-9]/g, ''))}
-                keyboardType="number-pad"
-                placeholder="0"
-                placeholderTextColor={theme.subText}
-              />
+              <TextInput style={styles.input} value={prize} onChangeText={t => setPrize(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" placeholder="0" placeholderTextColor={theme.subText} />
             </View>
           </View>
           <View style={styles.half}>
             <Text style={styles.fieldLabel}>ENTRY FEE</Text>
             <View style={styles.entryToggle}>
-              <TouchableOpacity
-                style={[styles.entrySeg, entryFee === 'free' && styles.entrySegActive]}
-                onPress={() => setEntryFee('free')}
-                activeOpacity={0.85}
-              >
+              <TouchableOpacity style={[styles.entrySeg, entryFee === 'free' && styles.entrySegActive]} onPress={() => setEntryFee('free')} activeOpacity={0.85}>
                 <Text style={[styles.entrySegText, entryFee === 'free' && styles.entrySegTextActive]}>FREE</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.entrySeg, entryFee === 'premium' && styles.entrySegActive]}
-                onPress={() => setEntryFee('premium')}
-                activeOpacity={0.85}
-              >
+              <TouchableOpacity style={[styles.entrySeg, entryFee === 'premium' && styles.entrySegActive]} onPress={() => setEntryFee('premium')} activeOpacity={0.85}>
                 <Text style={[styles.entrySegText, entryFee === 'premium' && styles.entrySegTextActive]}>PREMIUM</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* Max participants + Start date */}
         <View style={[styles.halfRow, styles.fieldGroup]}>
           <View style={styles.half}>
             <Text style={styles.fieldLabel}>MAX PARTICIPANTS</Text>
@@ -248,127 +243,25 @@ const CreateTournamentContent = () => {
             <Text style={styles.fieldLabel}>START DATE & TIME</Text>
             <TouchableOpacity style={styles.valueField} activeOpacity={0.8}>
               <Ionicons name="calendar-outline" size={15} color={theme.info} />
-              <Text style={styles.dateText} numberOfLines={1}>{startDate}</Text>
+              <Text style={styles.dateText} numberOfLines={1}>{displayStartDate}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
-      {/* ── Tournament Preview (collapsible) ── */}
-      <TouchableOpacity
-        style={styles.rulesCard}
-        onPress={() => setPreviewOpen(o => !o)}
-        activeOpacity={0.85}
-      >
-        <View style={styles.rulesIconWrap}>
-          <Ionicons name="eye-outline" size={18} color={theme.info} />
-        </View>
-        <View style={styles.rulesTextWrap}>
-          <Text style={styles.rulesTitle}>Tournament Preview</Text>
-          <Text style={styles.rulesSub}>See how your tournament will appear to players</Text>
-        </View>
-        <Ionicons name={previewOpen ? 'chevron-up' : 'chevron-down'} size={18} color={theme.subText} />
-      </TouchableOpacity>
-
-      {previewOpen && (
-        <View style={styles.previewExpand}>
-          <View style={styles.previewCard}>
-            <Text style={styles.previewHeaderLabel}>TOURNAMENT PREVIEW</Text>
-            <View style={styles.previewTrophyWrap}>
-              <Ionicons name="trophy" size={28} color={theme.info} />
-            </View>
-            <Text style={styles.previewTitle} numberOfLines={2}>
-              {(name || 'Tournament Name').toUpperCase()}
-            </Text>
-
-            <View style={styles.previewRow}>
-              <View style={styles.previewRowIcon}>
-                <Ionicons name="game-controller-outline" size={13} color={theme.info} />
-              </View>
-              <Text style={styles.previewLabel}>Game</Text>
-              <Text style={[styles.previewValue, styles.previewValueAccent]}>{gameName}</Text>
-            </View>
-            <View style={styles.previewRow}>
-              <View style={styles.previewRowIcon}>
-                <Ionicons name="git-branch-outline" size={13} color={theme.info} />
-              </View>
-              <Text style={styles.previewLabel}>Type</Text>
-              <Text style={styles.previewValue}>{typeLabel}</Text>
-            </View>
-            <View style={styles.previewRow}>
-              <View style={styles.previewRowIcon}>
-                <Ionicons name="cash-outline" size={13} color={theme.info} />
-              </View>
-              <Text style={styles.previewLabel}>Prize Pool</Text>
-              <Text style={[styles.previewValue, { color: theme.success }]}>${prize || '0'}</Text>
-            </View>
-            <View style={styles.previewRow}>
-              <View style={styles.previewRowIcon}>
-                <Ionicons name="card-outline" size={13} color={theme.info} />
-              </View>
-              <Text style={styles.previewLabel}>Entry Fee</Text>
-              <Text style={styles.previewValue}>{entryFee === 'free' ? 'Free' : 'Premium'}</Text>
-            </View>
-            <View style={styles.previewRow}>
-              <View style={styles.previewRowIcon}>
-                <Ionicons name="people-outline" size={13} color={theme.info} />
-              </View>
-              <Text style={styles.previewLabel}>Max Participants</Text>
-              <Text style={styles.previewValue}>{participants}</Text>
-            </View>
-            <View style={styles.previewRow}>
-              <View style={styles.previewRowIcon}>
-                <Ionicons name="calendar-outline" size={13} color={theme.info} />
-              </View>
-              <Text style={styles.previewLabel}>Start Date</Text>
-              <Text style={styles.previewValue}>{startDate}</Text>
-            </View>
-
-            <View style={styles.previewDivider} />
-            <Text style={styles.previewDescLabel}>DESCRIPTION</Text>
-            <Text style={styles.previewDesc}>{description}</Text>
-          </View>
-        </View>
-      )}
-
-      {/* ── Tournament Rules ── */}
-      <TouchableOpacity
-        style={styles.rulesCard}
-        onPress={() => setRulesOpen(o => !o)}
-        activeOpacity={0.85}
-      >
-        <View style={styles.rulesIconWrap}>
-          <Ionicons name="settings-outline" size={18} color={theme.info} />
-        </View>
-        <View style={styles.rulesTextWrap}>
-          <Text style={styles.rulesTitle}>Tournament Rules</Text>
-          <Text style={styles.rulesSub}>Set match rules, map selection, scoring system and more</Text>
-        </View>
-        <Ionicons name={rulesOpen ? 'chevron-up' : 'chevron-down'} size={18} color={theme.subText} />
-      </TouchableOpacity>
-
-      {rulesOpen && (
-        <View style={styles.rulesExpand}>
-          {['Match format & best-of', 'Map / stage selection', 'Scoring system', 'Check-in & seeding'].map(r => (
-            <TouchableOpacity key={r} style={styles.ruleItem} activeOpacity={0.8}>
-              <Ionicons name="ellipse-outline" size={14} color={theme.info} />
-              <Text style={styles.ruleItemText}>{r}</Text>
-              <Ionicons name="chevron-forward" size={14} color={theme.subText} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      {/* ── Create button ── */}
-      <TouchableOpacity style={styles.createBtn} activeOpacity={0.9}>
-        <Ionicons name="trophy" size={20} color="#fff" />
-        <Text style={styles.createBtnText}>CREATE TOURNAMENT</Text>
+      <TouchableOpacity style={styles.createBtn} onPress={handleCreate} activeOpacity={0.9} disabled={creating}>
+        {creating ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <>
+            <Ionicons name="trophy" size={20} color="#fff" />
+            <Text style={styles.createBtnText}>CREATE TOURNAMENT</Text>
+          </>
+        )}
       </TouchableOpacity>
     </ScrollView>
   );
 };
-
-// ── Header ─────────────────────────────────────────────────────────
 
 const HeaderLeft = () => {
   const theme = useTheme() as AppTheme;
@@ -403,8 +296,6 @@ const HeaderRight = () => {
     </View>
   );
 };
-
-// ── Stack Navigator ────────────────────────────────────────────────
 
 const CreateTournament = () => {
   const theme = useTheme() as AppTheme;

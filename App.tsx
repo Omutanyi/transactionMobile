@@ -12,6 +12,7 @@ import SignupScreen from './screens/SignupScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import SendPaymentScreen from './screens/SendPaymentScreen';
 import MainNavigator from './navigation/MainNavigator';
+import ToastProvider from './components/ToastProvider';
 import { lightTheme, darkTheme } from './theme';
 
 export default function App() {
@@ -27,7 +28,9 @@ export default function App() {
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <MainNavigator />
+        <ToastProvider>
+          <MainNavigator />
+        </ToastProvider>
       </ThemeProvider>
     </Provider>
   );

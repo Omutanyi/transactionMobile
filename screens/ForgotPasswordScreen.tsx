@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@emotion/react';
-import { Container, Title, ErrorText, ButtonWrapper } from '../components/StyledComponents';
+import { Container, Title, ButtonWrapper } from '../components/StyledComponents';
+import { useToast } from '../components/ToastProvider';
 import InputWithIcon from '../components/input/InputWithIcon';
 import ButtonWithIcon from '../components/input/ButtonWithIcon';
+import { request } from '../requests';
+import apis from '../api';
 
 interface Props {
   navigation: any;
@@ -12,20 +15,24 @@ interface Props {
 const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   const theme = useTheme();
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const handleReset = async () => {
+    if (!email.trim()) {
+      showToast('Please enter your email address.', 'error');
+      return;
+    }
     setLoading(true);
-    setMessage('');
     try {
-      // Simulate API call
-      setTimeout(() => {
-        setMessage('If this email exists, a reset link has been sent.');
-        setLoading(false);
-      }, 1200);
-    } catch (e) {
-      setMessage('Something went wrong. Please try again.');
+      await request(apis.forgotPassword, {
+        method: 'POST',
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      showToast('If this email exists, a reset link has been sent.', 'success');
+    } catch (e: any) {
+      showToast(e?.message || 'Something went wrong. Please try again.', 'error');
+    } finally {
       setLoading(false);
     }
   };
@@ -39,8 +46,9 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
+        keyboardType="email-address"
       />
-      {message ? <ErrorText>{message}</ErrorText> : null}
+      {/* global toast shown by provider */}
       <ButtonWrapper>
         <ButtonWithIcon
           title={loading ? 'Sending...' : 'Send Reset Link'}

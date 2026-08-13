@@ -1,5 +1,5 @@
 import styled from '@emotion/native';
-import { TouchableOpacity, Text, View, Image } from 'react-native';
+import { TouchableOpacity, Text, View, Image, TextInput } from 'react-native';
 import { AppTheme } from '../theme';
 // ...existing code...
 
@@ -120,3 +120,16 @@ export const LinkText = styled.Text<{ theme?: any }>`
   text-decoration: underline;
   font-size: 15px;
 `;
+
+// NativeWind-friendly wrappers: use these when you want `className` (Tailwind) styles.
+import { cssInterop } from 'nativewind';
+
+export const TWContainer = cssInterop(View, { className: true });
+export const TWText = cssInterop(Text, { className: true });
+export const TWTouchable = cssInterop(TouchableOpacity, { className: true });
+export const TWImage = cssInterop(Image, { className: true });
+export const TWInput = cssInterop(TextInput, { className: true });
+
+// Examples of usage:
+// <TWContainer className="p-4 bg-transparent" />
+// <TWText className="text-white text-lg" />

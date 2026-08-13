@@ -9,7 +9,8 @@ import apis from '../api';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { Container, ErrorText } from '../components/StyledComponents';
+import { Container } from '../components/StyledComponents';
+import { useToast } from '../components/ToastProvider';
 import { useTheme } from '@emotion/react';
 
 interface Transaction {
@@ -24,8 +25,8 @@ const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const user = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [toast, setToast] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const { showToast } = useToast();
 
   const fetchTransactions = async () => {
     try {
@@ -43,21 +44,13 @@ const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   useEffect(() => {
     console.log('User role:', user);
     if (user.role === 'psp') {
-      setToast('You have 5 merchants connected');
+      showToast('You have 5 merchants connected', 'info');
     } else if (user.role === 'dev') {
-      setToast("You've made 42 API calls this week");
-    }
-    if (user.role) {
-      const timer = setTimeout(() => setToast(null), 3000);
-      return () => clearTimeout(timer);
+      showToast("You've made 42 API calls this week", 'info');
     }
   }, [user.role]);
 
-  useEffect(() => {
-    if (toast && Platform.OS === 'android') {
-      ToastAndroid.show(toast, ToastAndroid.SHORT);
-    }
-  }, [toast]);
+  // show inline toast UI
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -99,9 +92,7 @@ const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             <Ionicons name="send" size={18} color="#fff" style={{ marginLeft: 6 }} />
           </TouchableOpacity>
         </View>
-        {toast && Platform.OS !== 'android' && (
-          <ErrorText>{toast}</ErrorText>
-        )}
+        {/* global toast provided by ToastProvider */}
         <FlatList
           data={transactions}
           keyExtractor={(item: any) => item.id?.toString() ?? Math.random().toString()}

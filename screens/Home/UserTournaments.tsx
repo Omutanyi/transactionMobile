@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '@emotion/react';
-import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createStackNavigator } from '@react-navigation/stack';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { AppTheme } from '../../theme';
 import { createStyles, getHeaderOptions, RANK_COLORS, RankKey } from './UserTournaments.styles';
 import AppLogo from '../../components/AppLogo';
 import TournamentDetails from '../Tournaments/TournamentDetails';
+import { request } from '../../requests';
+import apis from '../../api';
 
 const Stack = createStackNavigator();
-
-// ── Static data ───────────────────────────────────────────────────
 
 const CATEGORIES: { id: string; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
   { id: 'all', label: 'All', icon: 'apps-outline' },
@@ -19,6 +19,34 @@ const CATEGORIES: { id: string; label: string; icon: React.ComponentProps<typeof
   { id: 'moba', label: 'MOBA', icon: 'people-outline' },
   { id: 'sports', label: 'Sports', icon: 'football-outline' },
   { id: 'strategy', label: 'Strategy', icon: 'bulb-outline' },
+];
+
+const FALLBACK_IMAGES = [
+  require('../../assets/gaming.jpg'),
+  require('../../assets/profile.jpg'),
+  require('../../assets/avatar.jpg'),
+  require('../../assets/icon.png'),
+];
+
+const STATIC_TOURNAMENTS = [
+  {
+    id: 1, name: 'Valorant Showdown', game: 'Valorant', category: 'fps',
+    prize: 2500, entryFee: 10, players: 128, maxPlayers: 256,
+    date: 'Today, 8:00 PM', rank: 'BRONZE' as RankKey,
+    image: require('../../assets/gaming.jpg'),
+  },
+  {
+    id: 2, name: 'FIFA Mobile Cup', game: 'FIFA Mobile', category: 'sports',
+    prize: 1500, entryFee: 5, players: 96, maxPlayers: 192,
+    date: 'Tomorrow, 6:00 PM', rank: 'SILVER' as RankKey,
+    image: require('../../assets/profile.jpg'),
+  },
+  {
+    id: 3, name: 'CODM Elite Cup', game: 'Call of Duty', category: 'fps',
+    prize: 2000, entryFee: 8, players: 200, maxPlayers: 256,
+    date: 'May 25, 7:00 PM', rank: 'GOLD' as RankKey,
+    image: require('../../assets/avatar.jpg'),
+  },
 ];
 
 interface Tournament {
@@ -33,42 +61,18 @@ interface Tournament {
   date: string;
   rank: RankKey;
   image: any;
+  TournamentId?: number;
+  GameId?: number;
+  GameName?: string;
+  GameImage?: string;
+  PrizePool?: number;
+  EntryFee?: number;
+  MaxParticipants?: number;
+  Status?: string;
+  StartDate?: string;
+  EndDate?: string;
+  ParticipantCount?: number;
 }
-
-const TOURNAMENTS: Tournament[] = [
-  {
-    id: 1, name: 'Valorant Showdown', game: 'Valorant', category: 'fps',
-    prize: 2500, entryFee: 10, players: 128, maxPlayers: 256,
-    date: 'Today, 8:00 PM', rank: 'BRONZE',
-    image: require('../../assets/gaming.jpg'),
-  },
-  {
-    id: 2, name: 'FIFA Mobile Cup', game: 'FIFA Mobile', category: 'sports',
-    prize: 1500, entryFee: 5, players: 96, maxPlayers: 192,
-    date: 'Tomorrow, 6:00 PM', rank: 'SILVER',
-    image: require('../../assets/profile.jpg'),
-  },
-  {
-    id: 3, name: 'CODM Elite Cup', game: 'Call of Duty', category: 'fps',
-    prize: 2000, entryFee: 8, players: 200, maxPlayers: 256,
-    date: 'May 25, 7:00 PM', rank: 'GOLD',
-    image: require('../../assets/avatar.jpg'),
-  },
-  {
-    id: 4, name: 'League Champions', game: 'League of Legends', category: 'moba',
-    prize: 3000, entryFee: 15, players: 64, maxPlayers: 128,
-    date: 'May 26, 4:00 PM', rank: 'GOLD',
-    image: require('../../assets/icon.png'),
-  },
-  {
-    id: 5, name: 'NBA 2K Pro Cup', game: 'NBA 2K24', category: 'sports',
-    prize: 1000, entryFee: 5, players: 48, maxPlayers: 64,
-    date: 'May 27, 8:00 PM', rank: 'BRONZE',
-    image: require('../../assets/gaming.jpg'),
-  },
-];
-
-// ── Content Screen ─────────────────────────────────────────────────
 
 const UserTournamentsContent = () => {
   const theme = useTheme() as AppTheme;
@@ -77,6 +81,51 @@ const UserTournamentsContent = () => {
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [countdown, setCountdown] = useState({ days: 2, hrs: 14, mins: 32, secs: 45 });
+  const [tournaments, setTournaments] = useState<Tournament[]>(STATIC_TOURNAMENTS);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTournaments = useCallback(async () => {
+    try {
+      const data = await request(apis.tournaments, { method: 'GET' });
+      const list = Array.isArray(data) ? data : data?.data ?? data?.tournaments ?? [];
+      if (list.length > 0) {
+        const mapped: Tournament[] = list.map((t: any, i: number) => ({
+          id: t.TournamentId ?? t.id ?? i,
+          TournamentId: t.TournamentId ?? t.id,
+          GameId: t.GameId ?? t.gameId,
+          name: t.Name ?? t.name ?? 'Tournament',
+          game: t.GameName ?? t.gameName ?? t.game ?? 'Unknown',
+          GameName: t.GameName ?? t.gameName,
+          GameImage: t.GameImage ?? t.gameImage,
+          category: t.Category ?? t.category ?? 'all',
+          prize: t.PrizePool ?? t.prizePool ?? t.prize ?? 0,
+          PrizePool: t.PrizePool ?? t.prizePool,
+          entryFee: t.EntryFee ?? t.entryFee ?? t.entryFee ?? 0,
+          EntryFee: t.EntryFee ?? t.entryFee,
+          players: t.ParticipantCount ?? t.players ?? 0,
+          maxPlayers: t.MaxParticipants ?? t.maxPlayers ?? t.maxParticipants ?? 64,
+          MaxParticipants: t.MaxParticipants ?? t.maxParticipants,
+          Status: t.Status ?? t.status,
+          date: t.StartDate ? new Date(t.StartDate).toLocaleDateString() : (t.date ?? 'TBD'),
+          StartDate: t.StartDate ?? t.startDate,
+          EndDate: t.EndDate ?? t.endDate,
+          rank: ((t.Rank ?? t.rank) as RankKey) || 'BRONZE',
+          image: t.GameImage ? { uri: t.GameImage } : FALLBACK_IMAGES[i % FALLBACK_IMAGES.length],
+        }));
+        setTournaments(mapped);
+      }
+    } catch (e) {
+      // Keep static fallback
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTournaments();
+    }, [fetchTournaments])
+  );
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -94,20 +143,14 @@ const UserTournamentsContent = () => {
   }, []);
 
   const filtered = selectedCategory === 'all'
-    ? TOURNAMENTS
-    : TOURNAMENTS.filter(t => t.category === selectedCategory);
+    ? tournaments
+    : tournaments.filter(t => t.category === selectedCategory);
 
   const pad = (n: number) => String(n).padStart(2, '0');
 
   return (
     <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-
-      {/* ── Category Chips ── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoriesContent}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContent}>
         {CATEGORIES.map(cat => {
           const active = selectedCategory === cat.id;
           return (
@@ -124,7 +167,6 @@ const UserTournamentsContent = () => {
         })}
       </ScrollView>
 
-      {/* ── Featured Tournament ── */}
       <TouchableOpacity
         style={styles.featuredCard}
         activeOpacity={0.9}
@@ -136,29 +178,20 @@ const UserTournamentsContent = () => {
           },
         })}
       >
-        <Image
-          source={require('../../assets/gaming.jpg')}
-          style={styles.featuredBg}
-          resizeMode="cover"
-        />
+        <Image source={require('../../assets/gaming.jpg')} style={styles.featuredBg} resizeMode="cover" />
         <View style={styles.featuredOverlay} />
         <View style={styles.featuredContent}>
           <View style={styles.badgesRow}>
-            <View style={styles.featuredBadge}>
-              <Text style={styles.featuredBadgeText}>★ FEATURED</Text>
-            </View>
+            <View style={styles.featuredBadge}><Text style={styles.featuredBadgeText}>★ FEATURED</Text></View>
             <View style={styles.liveSoonBadge}>
               <View style={styles.liveSoonDot} />
               <Text style={styles.liveSoonText}>LIVE SOON</Text>
             </View>
           </View>
-
           <Text style={styles.featuredTitle}>Neon Championship</Text>
           <Text style={styles.featuredSubtitle}>The ultimate battle for glory!</Text>
-
           <Text style={styles.prizePoolLabel}>PRIZE POOL</Text>
           <Text style={styles.featuredPrize}>$5,000</Text>
-
           <View style={styles.countdownRow}>
             {[
               { value: countdown.days, unit: 'DAYS' },
@@ -178,7 +211,6 @@ const UserTournamentsContent = () => {
         </View>
       </TouchableOpacity>
 
-      {/* ── All Tournaments header ── */}
       <View style={styles.sectionHeader}>
         <View style={styles.sectionTitleRow}>
           <Ionicons name="trophy-outline" size={16} color={theme.primary} />
@@ -190,7 +222,8 @@ const UserTournamentsContent = () => {
         </TouchableOpacity>
       </View>
 
-      {/* ── Tournament Cards ── */}
+      {loading && <ActivityIndicator size="large" color={theme.primary} style={{ padding: 20 }} />}
+
       {filtered.map(t => (
         <TouchableOpacity
           key={t.id}
@@ -198,21 +231,16 @@ const UserTournamentsContent = () => {
           activeOpacity={0.9}
           onPress={() => navigation.navigate('TournamentDetails', { tournament: t })}
         >
-          {/* Left: game image + rank badge */}
           <View style={styles.cardImageWrapper}>
             <Image source={t.image} style={styles.cardImage} resizeMode="cover" />
             <View style={[styles.rankBadge, { backgroundColor: RANK_COLORS[t.rank] }]}>
               <Text style={styles.rankBadgeText}>{t.rank}</Text>
             </View>
           </View>
-
-          {/* Middle: name, prize, players */}
           <View style={styles.cardBody}>
             <Text style={styles.cardName} numberOfLines={1}>{t.name}</Text>
             <View style={styles.cardPrizeRow}>
-              <View style={styles.dollarBadge}>
-                <Text style={styles.dollarBadgeText}>$</Text>
-              </View>
+              <View style={styles.dollarBadge}><Text style={styles.dollarBadgeText}>$</Text></View>
               <Text style={styles.cardPrize}>{t.prize.toLocaleString()}</Text>
             </View>
             <View style={styles.cardPlayersRow}>
@@ -220,8 +248,6 @@ const UserTournamentsContent = () => {
               <Text style={styles.cardPlayersText}>{t.players} / {t.maxPlayers}</Text>
             </View>
           </View>
-
-          {/* Right: date, entry fee, join button */}
           <View style={styles.cardRight}>
             <View style={styles.cardDateRow}>
               <Ionicons name="calendar-outline" size={11} color={theme.subText} />
@@ -241,21 +267,16 @@ const UserTournamentsContent = () => {
         </TouchableOpacity>
       ))}
 
-      {/* ── Bottom Invite Banner ── */}
       <TouchableOpacity style={styles.bottomBanner} activeOpacity={0.85}>
         <Ionicons name="gift-outline" size={22} color={theme.primary} />
         <Text style={styles.bottomBannerText}>
-          Invite friends & get up to{' '}
-          <Text style={styles.bottomBannerHighlight}>$10</Text> bonus!
+          Invite friends & get up to <Text style={styles.bottomBannerHighlight}>$10</Text> bonus!
         </Text>
         <Ionicons name="chevron-forward" size={16} color={theme.subText} />
       </TouchableOpacity>
-
     </ScrollView>
   );
 };
-
-// ── Stack Navigator ────────────────────────────────────────────────
 
 const UserTournaments = () => {
   const theme = useTheme() as AppTheme;
@@ -268,9 +289,7 @@ const UserTournaments = () => {
         headerShown: true,
         headerTitle: 'Tournaments',
         headerLeft: () => (
-          <View style={{ marginLeft: 16 }}>
-            <AppLogo iconOnly size="sm" />
-          </View>
+          <View style={{ marginLeft: 16 }}><AppLogo iconOnly size="sm" /></View>
         ),
         headerRight: () => (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
@@ -290,21 +309,14 @@ const UserTournaments = () => {
           headerTitleAlign: 'center',
           headerLeft: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10 }}>
-              <TouchableOpacity
-                onPress={() => navigation.goBack()}
-                style={{ padding: 4, marginRight: 4 }}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4, marginRight: 4 }} activeOpacity={0.7}>
                 <Ionicons name="chevron-back" size={24} color={theme.text} />
               </TouchableOpacity>
               <AppLogo iconOnly size="sm" />
             </View>
           ),
           headerRight: () => (
-            <TouchableOpacity
-              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }} activeOpacity={0.7}>
               <Ionicons name="share-social-outline" size={20} color={theme.text} />
               <Text style={{ color: theme.text, fontSize: 13, fontWeight: '600', marginLeft: 5 }}>Share</Text>
             </TouchableOpacity>
