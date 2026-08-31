@@ -20,6 +20,7 @@ import apis from '../api';
 import { setUser } from '../redux/userReducer';
 import SocialAuthRow, { SocialProvider } from '../components/input/SocialAuthRow';
 import { createStyles } from './LoginScreen.styles';
+import { toast } from '../utils/ToastService';
 
 const REMEMBER_KEY = 'rememberedIdentifier';
 
@@ -37,7 +38,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Prefill a remembered identifier on mount.
@@ -53,10 +53,9 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (!identifier.trim() || !password) {
-      setError('Please enter your email/username and password.');
+      toast.error('Please enter your email/username and password.');
       return;
     }
-    setError('');
     setLoading(true);
     try {
       // The field accepts either an email or a username — send both so the
@@ -89,21 +88,23 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             email: profile?.Email,
             username: profile?.Username,
             role: profile?.role?.RoleName,
+            fullName: profile?.FullName ?? profile?.fullName,
             ...profile,
           })
         );
+        toast.success('Welcome back!');
       } else {
-        setError('Invalid credentials. Please try again.');
+        toast.error('Invalid credentials. Please try again.');
       }
     } catch (e: any) {
-      setError(e?.message || 'An unexpected error occurred.');
+      toast.error(e?.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleSocial = (provider: SocialProvider) => {
-    setError(`${provider[0].toUpperCase()}${provider.slice(1)} login is coming soon.`);
+    toast.info(`${provider[0].toUpperCase()}${provider.slice(1)} login is coming soon.`);
   };
 
   return (
@@ -172,7 +173,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        
 
         {/* Login */}
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin} activeOpacity={0.85} disabled={loading}>

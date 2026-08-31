@@ -29,7 +29,7 @@ interface CarouselProps {
 }
 
 const Carousel: React.FC<CarouselProps> = ({
-  data,
+  data = [],
   autoSlide = true,
   slideInterval = 3000,
   height = 200,

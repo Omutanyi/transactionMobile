@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, Image, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator,
+  View, Text, Image, ScrollView, TouchableOpacity, TextInput, ActivityIndicator,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useTheme } from '@emotion/react';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +13,8 @@ import AppLogo from '../../components/AppLogo';
 import { fetchGames } from '../../services/games';
 import { request } from '../../requests';
 import apis from '../../api';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { toast } from '../../utils/ToastService';
 
 const Stack = createStackNavigator();
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -58,6 +61,10 @@ const CreateTournamentContent = () => {
   const [rulesOpen, setRulesOpen] = useState(false);
   const [games, setGames] = useState<GameOption[]>(FALLBACK_GAMES);
   const [creating, setCreating] = useState(false);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+  const navigation = useNavigation<any>();
 
   useEffect(() => {
     let active = true;
@@ -73,17 +80,66 @@ const CreateTournamentContent = () => {
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    // Progress the stepper when the user fills fields
+    const prizeNum = parseInt(prize || '0', 10) || 0;
+    if (selectedGameName && step < 2) {
+      setStep(2);
+    }
+    if (name.trim() && selectedGameName && prizeNum > 0 && participants > 0) {
+      setStep(3);
+    } else if (step === 3 && !(name.trim() && prizeNum > 0 && participants > 0)) {
+      setStep(2);
+    }
+  }, [selectedGameName, name, prize, participants]);
+
+  const handleStartDateChange = (event: any, selected?: Date) => {
+    if (Platform.OS === 'android') {
+      // Date picked — hide the date picker and open the time picker next.
+      setShowStartPicker(false);
+      if (selected) {
+        const next = new Date(tempStartDate);
+        next.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
+        setTempStartDate(next);
+        setShowStartTimePicker(true);
+      }
+    } else {
+      // iOS supports the combined datetime mode in a single picker.
+      if (selected) setStartDate(selected.toISOString());
+    }
+  };
+
+  const handleStartTimeChange = (event: any, selected?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowStartTimePicker(false);
+    }
+    if (selected) {
+      const next = new Date(tempStartDate);
+      next.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
+      setStartDate(next.toISOString());
+    }
+  };
+
+  const openStartPicker = () => {
+    setTempStartDate(new Date(startDate));
+    if (Platform.OS === 'android') {
+      setShowStartPicker(true);
+    } else {
+      setShowStartPicker(true);
+    }
+  };
+
   const handleCreate = async () => {
     if (!name.trim()) {
-      Alert.alert('Error', 'Please enter a tournament name');
+      toast.error('Please enter a tournament name');
       return;
     }
     if (!selectedGameId) {
-      Alert.alert('Error', 'Please select a game');
+      toast.error('Please select a game');
       return;
     }
     if (!prize || parseInt(prize) <= 0) {
-      Alert.alert('Error', 'Please enter a valid prize pool');
+      toast.error('Please enter a valid prize pool');
       return;
     }
 
@@ -101,16 +157,10 @@ const CreateTournamentContent = () => {
         description: description.trim(),
       };
       await request(apis.tournaments, { method: 'POST', body: JSON.stringify(body) });
-      Alert.alert('Success', 'Tournament created successfully!', [
-        { text: 'OK', onPress: () => {
-          const navigation = useNavigation();
-          // Fallback: the Alert callback can't access hooks — just navigate back via the screen's navigation
-        }}
-      ]);
-      // Navigate back via the onPress above won't work due to hook rules,
-      // so we use a boolean state to trigger navigation in a useEffect instead.
+      toast.success('Tournament created successfully!');
+      navigation.goBack();
     } catch (e: any) {
-      Alert.alert('Error', e?.message || 'Failed to create tournament');
+      toast.error(e?.message || 'Failed to create tournament');
     } finally {
       setCreating(false);
     }
@@ -126,8 +176,17 @@ const CreateTournamentContent = () => {
     hour: '2-digit', minute: '2-digit',
   });
 
+  const stringToColor = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const color = `hsl(${hash % 360}, 60%, 70%)`;
+    return color;
+  }
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={true}>
       <View style={styles.stepperRow}>
         {[
           { id: 1, label: 'GAME SELECT' },
@@ -153,6 +212,8 @@ const CreateTournamentContent = () => {
       <View style={styles.gameGrid}>
         {games.map(g => {
           const active = g.id === selectedGameName;
+          const hasImage = !!g.image;
+          const bgColor = stringToColor(g.id || g.name || '')
           return (
             <TouchableOpacity
               key={g.id}
@@ -163,7 +224,11 @@ const CreateTournamentContent = () => {
               }}
               activeOpacity={0.9}
             >
-              <Image source={g.image} style={styles.gameCardImage} resizeMode="cover" />
+              {hasImage ? (
+                <Image source={g.image} style={styles.gameCardImage} resizeMode="cover" />
+              ) : (
+                <View style={[styles.gameCardImage, { backgroundColor: bgColor }]} />
+              )}
               <View style={styles.gameCardOverlay}>
                 <Text style={styles.gameCardName} numberOfLines={1}>{g.name}</Text>
               </View>
@@ -179,7 +244,7 @@ const CreateTournamentContent = () => {
         <View style={styles.fieldGroup}>
           <Text style={styles.fieldLabel}>TOURNAMENT NAME</Text>
           <View style={styles.inputWrapper}>
-            <Ionicons name="trophy-outline" size={15} color={theme.info} />
+            <Ionicons name="trophy-outline" size={15} color={theme.primary} />
             <TextInput style={styles.input} value={name} onChangeText={t => setName(t.slice(0, NAME_MAX))} placeholder="Tournament name" placeholderTextColor={theme.subText} />
           </View>
           <Text style={styles.charCount}>{name.length}/{NAME_MAX}</Text>
@@ -188,7 +253,7 @@ const CreateTournamentContent = () => {
         <View style={styles.fieldGroup}>
           <Text style={styles.fieldLabel}>DESCRIPTION</Text>
           <View style={[styles.inputWrapper, styles.inputMultiline]}>
-            <Ionicons name="document-text-outline" size={15} color={theme.info} style={{ marginTop: 9 }} />
+            <Ionicons name="document-text-outline" size={15} color={theme.primary} style={{ marginTop: 9 }} />
             <TextInput style={[styles.input, styles.inputMultilineText]} value={description} onChangeText={t => setDescription(t.slice(0, DESC_MAX))} placeholder="Describe your tournament" placeholderTextColor={theme.subText} multiline />
           </View>
           <Text style={styles.charCount}>{description.length}/{DESC_MAX}</Text>
@@ -201,7 +266,7 @@ const CreateTournamentContent = () => {
               const active = type === t.id;
               return (
                 <TouchableOpacity key={t.id} style={[styles.typeCard, active && styles.typeCardActive]} onPress={() => setType(t.id)} activeOpacity={0.85}>
-                  <Ionicons name={t.icon} size={20} color={active ? theme.info : theme.subText} />
+                  <Ionicons name={t.icon} size={20} color={active ? theme.primary : theme.subText} />
                   <Text style={[styles.typeLabel, active && styles.typeLabelActive]}>{t.label}</Text>
                 </TouchableOpacity>
               );
@@ -223,7 +288,7 @@ const CreateTournamentContent = () => {
               <TouchableOpacity style={[styles.entrySeg, entryFee === 'free' && styles.entrySegActive]} onPress={() => setEntryFee('free')} activeOpacity={0.85}>
                 <Text style={[styles.entrySegText, entryFee === 'free' && styles.entrySegTextActive]}>FREE</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.entrySeg, entryFee === 'premium' && styles.entrySegActive]} onPress={() => setEntryFee('premium')} activeOpacity={0.85}>
+              <TouchableOpacity style={[styles.entrySeg, entryFee === 'premium' && styles.entryPremiumSegActive]} onPress={() => setEntryFee('premium')} activeOpacity={0.85}>
                 <Text style={[styles.entrySegText, entryFee === 'premium' && styles.entrySegTextActive]}>PREMIUM</Text>
               </TouchableOpacity>
             </View>
@@ -232,19 +297,46 @@ const CreateTournamentContent = () => {
 
         <View style={[styles.halfRow, styles.fieldGroup]}>
           <View style={styles.half}>
-            <Text style={styles.fieldLabel}>MAX PARTICIPANTS</Text>
-            <TouchableOpacity style={styles.valueField} onPress={cycleParticipants} activeOpacity={0.8}>
-              <Ionicons name="people-outline" size={15} color={theme.info} />
-              <Text style={styles.valueText}>{participants}</Text>
-              <Ionicons name="chevron-down" size={14} color={theme.subText} />
-            </TouchableOpacity>
-          </View>
+              <Text style={styles.fieldLabel}>MAX PARTICIPANTS</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="people-outline" size={15} color={theme.primary} />
+                <TextInput
+                  style={styles.input}
+                  value={String(participants)}
+                  onChangeText={t => {
+                    const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                    setParticipants(Number.isNaN(n) ? 0 : n);
+                  }}
+                  keyboardType="number-pad"
+                  placeholder="0"
+                  placeholderTextColor={theme.subText}
+                />
+              </View>
+            </View>
           <View style={styles.half}>
             <Text style={styles.fieldLabel}>START DATE & TIME</Text>
-            <TouchableOpacity style={styles.valueField} activeOpacity={0.8}>
-              <Ionicons name="calendar-outline" size={15} color={theme.info} />
+            <TouchableOpacity style={styles.valueField} activeOpacity={0.8} onPress={openStartPicker}>
+              <Ionicons name="calendar-outline" size={15} color={theme.primary} />
               <Text style={styles.dateText} numberOfLines={1}>{displayStartDate}</Text>
             </TouchableOpacity>
+
+            {/* Android: pick date first, then time. iOS: combined datetime mode. */}
+            {showStartPicker && (
+              <DateTimePicker
+                value={tempStartDate}
+                mode={Platform.OS === 'ios' ? 'datetime' : 'date'}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleStartDateChange}
+              />
+            )}
+            {showStartTimePicker && (
+              <DateTimePicker
+                value={tempStartDate}
+                mode="time"
+                display="default"
+                onChange={handleStartTimeChange}
+              />
+            )}
           </View>
         </View>
       </View>

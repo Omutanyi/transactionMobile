@@ -95,7 +95,7 @@ const UserHomeContent = () => {
           activeOpacity={0.85}
         >
           <View style={styles.actionIconWrapper}>
-            <Ionicons name="trophy-outline" size={36} color={theme.info} />
+            <Ionicons name="trophy-outline" size={36} color={theme.rankGold} />
           </View>
           <Text style={styles.actionTitle}>TOURNAMENTS</Text>
           <Text style={styles.actionSubtitle}>{'Compete & Win\nBig Prizes'}</Text>
@@ -111,7 +111,7 @@ const UserHomeContent = () => {
           activeOpacity={0.85}
         >
           <View style={styles.actionIconWrapper}>
-            <Ionicons name="game-controller-outline" size={36} color={theme.secondary} />
+            <Ionicons name="game-controller-outline" size={36} color={theme.rankBronze} />
           </View>
           <Text style={styles.actionTitle}>PLAY MATCH</Text>
           <Text style={styles.actionSubtitle}>{'Jump into\naction now!'}</Text>

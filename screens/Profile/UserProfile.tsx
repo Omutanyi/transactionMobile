@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '@emotion/react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { AvatarImage } from '../../components/StyledComponents';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -11,6 +11,9 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { clearUser } from '../../redux/userReducer';
+import { clearStoredSession } from '../../utils/auth';
+import { toast } from '../../utils/ToastService';
 import { createStackNavigator } from '@react-navigation/stack';
 import AppLogo from '../../components/AppLogo';
 import StatCard from '../../components/profile/StatCard';
@@ -266,12 +269,33 @@ const createStyles = (theme: AppTheme) =>
       color: '#fff',
       letterSpacing: 1,
     },
+    logoutButton: {
+      backgroundColor: theme.error,
+      marginTop: 0,
+      shadowColor: theme.error,
+    },
   });
 
 const UserProfileContent: React.FC<{ navigation: any }> = ({ navigation }) => {
   const theme = useTheme() as AppTheme;
   const styles = createStyles(theme);
   const user = useSelector((state: RootState) => state.user);
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    Alert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log Out',
+        style: 'destructive',
+        onPress: async () => {
+          await clearStoredSession();
+          dispatch(clearUser());
+          toast.info('You have been logged out');
+        },
+      },
+    ]);
+  };
 
   // Live values from redux with sensible fallbacks for first-run / demo state.
   const displayName = user.fullName || user.username || 'ProGamer';
@@ -402,6 +426,15 @@ const UserProfileContent: React.FC<{ navigation: any }> = ({ navigation }) => {
       >
         <Ionicons name="create-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
         <Text style={styles.editButtonText}>EDIT PROFILE</Text>
+      </TouchableOpacity>
+
+      {/* Logout Button */}
+      <TouchableOpacity
+        style={[styles.editButton, styles.logoutButton]}
+        onPress={handleLogout}
+      >
+        <Ionicons name="log-out-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+        <Text style={styles.editButtonText}>LOG OUT</Text>
       </TouchableOpacity>
     </ScrollView>
   );

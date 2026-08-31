@@ -3,6 +3,16 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/native';
 
+interface StackScreenConfig {
+  name: string;
+  component: React.ComponentType<any>;
+  title?: string;
+}
+
+interface DashboardStackProps {
+  screens: StackScreenConfig[];
+}
+
 const Stack = createStackNavigator();
 
 const Header = styled.View`
@@ -19,7 +29,7 @@ const HeaderText = styled.Text`
   font-weight: bold;
 `;
 
-export const DashboardStack = ({ screens }) => {
+export const DashboardStack: React.FC<DashboardStackProps> = ({ screens }) => {
   const theme = useTheme();
   return (
     <Stack.Navigator>

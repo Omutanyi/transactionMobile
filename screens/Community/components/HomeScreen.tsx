@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container, Title, AvatarImage, OptionRow, OptionText } from '../../../components/StyledComponents';
 import { View, Text, FlatList } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 
 
 const dummyFeeds = Array.from({ length: 20 }, (_, i) => ({

@@ -15,6 +15,7 @@ export const lightTheme = {
     secondary: '#5856D6',
     success: '#34C759',
     warning: '#FF9500',
+    // info: '#FF9500',
     info: '#5AC8FA',
     rankGold: '#D4AF37',
     rankBronze: '#A0522D',

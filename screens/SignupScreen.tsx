@@ -17,6 +17,7 @@ import { request } from '../requests';
 import apis from '../api';
 import SocialAuthRow, { SocialProvider } from '../components/input/SocialAuthRow';
 import { createStyles } from './SignupScreen.styles';
+import { toast } from '../utils/ToastService';
 
 interface Props {
   navigation: any;
@@ -60,7 +61,6 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
   const [gameMenuOpen, setGameMenuOpen] = useState(false);
   const [level, setLevel] = useState<GamingLevel>('Competitive');
   const [agreed, setAgreed] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const strength = useMemo(() => evaluatePassword(password, theme), [password, theme]);
@@ -93,14 +93,13 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
   ];
 
   const handleSignup = async () => {
-    if (!fullName.trim()) return setError('Please enter your full name.');
-    if (!usernameAvailable) return setError('Username must be at least 3 characters with no spaces.');
-    if (!emailValid) return setError('Please enter a valid email address.');
-    if (strength.score < 2) return setError('Please choose a stronger password.');
-    if (password !== confirm) return setError('Passwords do not match.');
-    if (!agreed) return setError('You must agree to the Terms of Service and Privacy Policy.');
+    if (!fullName.trim()) return toast.error('Please enter your full name.');
+    if (!usernameAvailable) return toast.error('Username must be at least 3 characters with no spaces.');
+    if (!emailValid) return toast.error('Please enter a valid email address.');
+    if (strength.score < 2) return toast.error('Please choose a stronger password.');
+    if (password !== confirm) return toast.error('Passwords do not match.');
+    if (!agreed) return toast.error('You must agree to the Terms of Service and Privacy Policy.');
 
-    setError('');
     setLoading(true);
     try {
       await request(apis.signup, {
@@ -115,16 +114,17 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
           role: 'psp',
         }),
       });
+      toast.success('Account created! Please log in.');
       navigation.navigate('Login');
     } catch (e: any) {
-      setError(e?.message || 'An unexpected error occurred.');
+      toast.error(e?.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleSocial = (provider: SocialProvider) => {
-    setError(`${provider[0].toUpperCase()}${provider.slice(1)} sign up is coming soon.`);
+    toast.info(`${provider[0].toUpperCase()}${provider.slice(1)} sign up is coming soon.`);
   };
 
   const steps = [
@@ -352,7 +352,7 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
           </Text>
         </TouchableOpacity>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        
 
         {/* Submit */}
         <TouchableOpacity style={styles.submitButton} onPress={handleSignup} activeOpacity={0.85} disabled={loading}>

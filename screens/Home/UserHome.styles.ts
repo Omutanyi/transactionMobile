@@ -41,6 +41,8 @@ export const createStyles = (theme: AppTheme, topInset: number = 0) =>
     },
     welcomeBlock: {
       flex: 1,
+      padding: 12,
+      gap: 4,
     },
     welcomeSmall: {
       fontSize: 11,
@@ -51,7 +53,7 @@ export const createStyles = (theme: AppTheme, topInset: number = 0) =>
     welcomeName: {
       fontSize: 26,
       fontWeight: 'bold',
-      color: theme.rankGold,
+      color: theme.warning,
       letterSpacing: 1,
       lineHeight: 30,
     },
@@ -78,8 +80,8 @@ export const createStyles = (theme: AppTheme, topInset: number = 0) =>
       overflow: 'hidden',
     },
     actionCardCyan: {
-      borderColor: theme.info,
-      shadowColor: theme.info,
+      borderColor: theme.primary,
+      shadowColor: theme.primary,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.35,
       shadowRadius: 10,
@@ -115,7 +117,7 @@ export const createStyles = (theme: AppTheme, topInset: number = 0) =>
       width: 30,
       height: 30,
       borderRadius: 15,
-      backgroundColor: theme.info,
+      backgroundColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',
     },

@@ -40,9 +40,9 @@ export const createStyles = (theme: AppTheme) =>
       marginBottom: 6,
     },
     stepCircleActive: {
-      borderColor: theme.info,
-      backgroundColor: theme.info,
-      shadowColor: theme.info,
+      borderColor: theme.primary,
+      backgroundColor: theme.primary,
+      shadowColor: theme.primary,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.6,
       shadowRadius: 8,
@@ -64,7 +64,7 @@ export const createStyles = (theme: AppTheme) =>
       textAlign: 'center',
     },
     stepLabelActive: {
-      color: theme.info,
+      color: theme.primary,
     },
     stepConnector: {
       height: 2,
@@ -98,15 +98,14 @@ export const createStyles = (theme: AppTheme) =>
     gameCard: {
       width: GAME_CARD_WIDTH,
       height: 86,
-      borderRadius: 14,
+      // borderRadius: 14,
       overflow: 'hidden',
       backgroundColor: theme.card,
-      borderWidth: 1.5,
-      borderColor: theme.border,
+      // borderWidth: 1.5,
     },
     gameCardSelected: {
-      borderColor: theme.info,
-      shadowColor: theme.info,
+      borderColor: theme.primary,
+      shadowColor: theme.primary,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.5,
       shadowRadius: 10,
@@ -119,7 +118,7 @@ export const createStyles = (theme: AppTheme) =>
     },
     gameCardOverlay: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: 'rgba(8,10,22,0.55)',
+      // backgroundColor: 'rgba(8,10,22,0.55)',
       justifyContent: 'flex-end',
       padding: 8,
     },
@@ -143,8 +142,8 @@ export const createStyles = (theme: AppTheme) =>
       justifyContent: 'center',
     },
     gameCheckActive: {
-      borderColor: theme.info,
-      backgroundColor: theme.info,
+      borderColor: theme.primary,
+      backgroundColor: theme.primary,
     },
 
     // ── Settings form (full width) ──────────────────────────────────
@@ -212,9 +211,9 @@ export const createStyles = (theme: AppTheme) =>
       alignItems: 'center',
     },
     typeCardActive: {
-      borderColor: theme.info,
-      backgroundColor: theme.info + '14',
-      shadowColor: theme.info,
+      borderColor: theme.primary,
+      backgroundColor: theme.primary + '14',
+      shadowColor: theme.primary,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.35,
       shadowRadius: 7,
@@ -230,7 +229,7 @@ export const createStyles = (theme: AppTheme) =>
       lineHeight: 13,
     },
     typeLabelActive: {
-      color: theme.info,
+      color: theme.primary,
     },
 
     // ── Half-width row (prize/entry, max/date) ──────────────────────
@@ -259,7 +258,10 @@ export const createStyles = (theme: AppTheme) =>
       justifyContent: 'center',
     },
     entrySegActive: {
-      backgroundColor: theme.info,
+      backgroundColor: theme.primary,
+    },
+    entryPremiumSegActive: {
+      backgroundColor: theme.warning,
     },
     entrySegText: {
       fontSize: 11,
@@ -445,10 +447,10 @@ export const createStyles = (theme: AppTheme) =>
       marginTop: 20,
       height: 58,
       borderRadius: 16,
-      backgroundColor: theme.secondary,
-      borderWidth: 1.5,
-      borderColor: theme.info,
-      shadowColor: theme.info,
+      backgroundColor: theme.primary,
+      // borderWidth: 1.5,
+      // borderColor: theme.primary,
+      shadowColor: theme.primary,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.6,
       shadowRadius: 16,
