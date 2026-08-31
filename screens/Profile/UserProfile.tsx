@@ -16,6 +16,8 @@ import { clearStoredSession } from '../../utils/auth';
 import { toast } from '../../utils/ToastService';
 import { createStackNavigator } from '@react-navigation/stack';
 import AppLogo from '../../components/AppLogo';
+import GlassBackground from '../../components/GlassBackground';
+import GlassCard from '../../components/GlassCard';
 import StatCard from '../../components/profile/StatCard';
 import AchievementCard from '../../components/profile/AchievementCard';
 import RankProgressBar, { RankMilestone } from '../../components/profile/RankProgressBar';
@@ -89,7 +91,7 @@ const createStyles = (theme: AppTheme) =>
   StyleSheet.create({
     scroll: {
       flex: 1,
-      backgroundColor: theme.background,
+      backgroundColor: 'transparent',
     },
     headerCard: {
       alignItems: 'center',
@@ -308,135 +310,137 @@ const UserProfileContent: React.FC<{ navigation: any }> = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-      {/* Profile Header */}
-      <View style={styles.headerCard}>
-        <View style={styles.avatarRing}>
-          <AvatarImage
-            source={user.avatar ? { uri: user.avatar } : require('../../assets/avatar.jpg')}
-            style={styles.avatar}
-          />
-        </View>
-        <View style={styles.nameRow}>
-          <Text style={styles.username}>{displayName}</Text>
-          <Ionicons name="checkmark-circle" size={20} color={theme.primary} style={{ marginLeft: 6 }} />
-        </View>
-        <View style={styles.handleRow}>
-          <Text style={styles.handle}>{handle}</Text>
-          <TouchableOpacity onPress={handleCopyHandle} hitSlop={10}>
-            <Ionicons name="copy-outline" size={14} color={theme.subText} style={{ marginLeft: 6 }} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Rank Card */}
-      <View style={styles.rankCard}>
-        <View style={styles.rankHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="trophy" size={26} color={theme.rankGold} />
-            <Text style={styles.rankTitle}>{gameStats.rank} RANK</Text>
+    <GlassBackground>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Profile Header */}
+        <GlassCard style={styles.headerCard}>
+          <View style={styles.avatarRing}>
+            <AvatarImage
+              source={user.avatar ? { uri: user.avatar } : require('../../assets/avatar.jpg')}
+              style={styles.avatar}
+            />
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
-            <Ionicons name="chevron-forward-outline" size={18} color={theme.subText} />
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.rpText}>
-          {gameStats.currentRp.toLocaleString()} / {gameStats.maxRp.toLocaleString()} RP
-        </Text>
-        <View style={styles.progressBarBg}>
-          <View style={[styles.progressBarFill, { width: `${Math.round(rpProgress * 100)}%` }]} />
-        </View>
-        <Text style={styles.rpToNextText}>
-          {gameStats.rpToNext} RP to reach {gameStats.nextRank}
-        </Text>
-      </View>
+          <View style={styles.nameRow}>
+            <Text style={styles.username}>{displayName}</Text>
+            <Ionicons name="checkmark-circle" size={20} color={theme.primary} style={{ marginLeft: 6 }} />
+          </View>
+          <View style={styles.handleRow}>
+            <Text style={styles.handle}>{handle}</Text>
+            <TouchableOpacity onPress={handleCopyHandle} hitSlop={10}>
+              <Ionicons name="copy-outline" size={14} color={theme.subText} style={{ marginLeft: 6 }} />
+            </TouchableOpacity>
+          </View>
+        </GlassCard>
 
-      {/* Stats Grid */}
-      <View style={styles.statsRow}>
-        <StatCard label="Followers" value={gameStats.followers} iconName="people-outline" />
-        <StatCard label="Following" value={gameStats.following} iconName="person-add-outline" />
-        <StatCard label="Matches" value={gameStats.matches} iconName="game-controller-outline" highlight />
-        <StatCard label="Win Rate" value={gameStats.winRate} iconName="trophy-outline" iconColor={theme.rankGold} />
-      </View>
-
-      {/* Bio (only when set) */}
-      {bio ? (
-        <View style={styles.bioCard}>
-          <Text style={styles.bioText}>{bio}</Text>
-        </View>
-      ) : null}
-
-      {/* Achievements */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>ACHIEVEMENTS</Text>
-        <TouchableOpacity>
-          <Text style={styles.viewAll}>VIEW ALL {'>'}</Text>
-        </TouchableOpacity>
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.achievementsScroll}
-      >
-        {achievements.map((a) => (
-          <AchievementCard
-            key={a.title}
-            title={a.title}
-            subtitle={a.subtitle}
-            date={a.date}
-            iconName={a.iconName}
-            iconColor={a.iconColor}
-            badge={a.badge}
-          />
-        ))}
-      </ScrollView>
-
-      {/* Rank Progression */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>RANK PROGRESSION</Text>
-        <TouchableOpacity>
-          <Text style={styles.viewAll}>VIEW STATS {'>'}</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.rankProgressContainer}>
-        <RankProgressBar milestones={rankMilestones} />
-      </View>
-
-      {/* Menu Options */}
-      <View style={styles.menuGrid}>
-        {menuOptions.map((opt) => (
-          <TouchableOpacity
-            key={opt.screen}
-            style={styles.menuItem}
-            onPress={() => navigation.navigate(opt.screen)}
-          >
-            <View style={styles.menuIconBg}>
-              <Ionicons name={opt.iconName} size={18} color={theme.primary} />
+        {/* Rank Card */}
+        <GlassCard style={styles.rankCard}>
+          <View style={styles.rankHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="trophy" size={26} color={theme.rankGold} />
+              <Text style={styles.rankTitle}>{gameStats.rank} RANK</Text>
             </View>
-            <Text style={styles.menuLabel}>{opt.label}</Text>
-            <Ionicons name="chevron-forward-outline" size={14} color={theme.subText} />
+            <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
+              <Ionicons name="chevron-forward-outline" size={18} color={theme.subText} />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.rpText}>
+            {gameStats.currentRp.toLocaleString()} / {gameStats.maxRp.toLocaleString()} RP
+          </Text>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${Math.round(rpProgress * 100)}%` }]} />
+          </View>
+          <Text style={styles.rpToNextText}>
+            {gameStats.rpToNext} RP to reach {gameStats.nextRank}
+          </Text>
+        </GlassCard>
+
+        {/* Stats Grid */}
+        <View style={styles.statsRow}>
+          <StatCard label="Followers" value={gameStats.followers} iconName="people-outline" />
+          <StatCard label="Following" value={gameStats.following} iconName="person-add-outline" />
+          <StatCard label="Matches" value={gameStats.matches} iconName="game-controller-outline" highlight />
+          <StatCard label="Win Rate" value={gameStats.winRate} iconName="trophy-outline" iconColor={theme.rankGold} />
+        </View>
+
+        {/* Bio (only when set) */}
+        {bio ? (
+          <GlassCard style={styles.bioCard}>
+            <Text style={styles.bioText}>{bio}</Text>
+          </GlassCard>
+        ) : null}
+
+        {/* Achievements */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>ACHIEVEMENTS</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAll}>VIEW ALL {'>'}</Text>
           </TouchableOpacity>
-        ))}
-      </View>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.achievementsScroll}
+        >
+          {achievements.map((a) => (
+            <AchievementCard
+              key={a.title}
+              title={a.title}
+              subtitle={a.subtitle}
+              date={a.date}
+              iconName={a.iconName}
+              iconColor={a.iconColor}
+              badge={a.badge}
+            />
+          ))}
+        </ScrollView>
 
-      {/* Edit Profile Button */}
-      <TouchableOpacity
-        style={styles.editButton}
-        onPress={() => navigation.navigate('EditProfile')}
-      >
-        <Ionicons name="create-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-        <Text style={styles.editButtonText}>EDIT PROFILE</Text>
-      </TouchableOpacity>
+        {/* Rank Progression */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>RANK PROGRESSION</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAll}>VIEW STATS {'>'}</Text>
+          </TouchableOpacity>
+        </View>
+        <GlassCard style={styles.rankProgressContainer}>
+          <RankProgressBar milestones={rankMilestones} />
+        </GlassCard>
 
-      {/* Logout Button */}
-      <TouchableOpacity
-        style={[styles.editButton, styles.logoutButton]}
-        onPress={handleLogout}
-      >
-        <Ionicons name="log-out-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-        <Text style={styles.editButtonText}>LOG OUT</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {/* Menu Options */}
+        <View style={styles.menuGrid}>
+          {menuOptions.map((opt) => (
+            <TouchableOpacity
+              key={opt.screen}
+              style={styles.menuItem}
+              onPress={() => navigation.navigate(opt.screen)}
+            >
+              <View style={styles.menuIconBg}>
+                <Ionicons name={opt.iconName} size={18} color={theme.primary} />
+              </View>
+              <Text style={styles.menuLabel}>{opt.label}</Text>
+              <Ionicons name="chevron-forward-outline" size={14} color={theme.subText} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Edit Profile Button */}
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => navigation.navigate('EditProfile')}
+        >
+          <Ionicons name="create-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+          <Text style={styles.editButtonText}>EDIT PROFILE</Text>
+        </TouchableOpacity>
+
+        {/* Logout Button */}
+        <TouchableOpacity
+          style={[styles.editButton, styles.logoutButton]}
+          onPress={handleLogout}
+        >
+          <Ionicons name="log-out-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+          <Text style={styles.editButtonText}>LOG OUT</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </GlassBackground>
   );
 };
 

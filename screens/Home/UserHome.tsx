@@ -8,6 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppTheme } from '../../theme';
 import { createStyles } from './UserHome.styles';
 import Carousel from '../../components/Carrousel';
+import GlassBackground from '../../components/GlassBackground';
+import GlassCard from '../../components/GlassCard';
 
 const Stack = createStackNavigator();
 
@@ -64,6 +66,7 @@ const UserHomeContent = () => {
   const styles = createStyles(theme, insets.top);
 
   return (
+    <GlassBackground>
     <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
       {/* ── Welcome Header ── */}
       <View style={styles.header}>
@@ -122,7 +125,7 @@ const UserHomeContent = () => {
       </View>
 
       {/* ── Quick Stats (full width) ── */}
-      <View style={styles.sectionCard}>
+      <GlassCard style={styles.sectionCard}>
         <Text style={styles.statsTitle}>QUICK STATS</Text>
 
         {/* Win Streak + Rank Progress side by side */}
@@ -167,7 +170,7 @@ const UserHomeContent = () => {
             <Text style={styles.miniStatLabel}>TROPHIES</Text>
           </View>
         </View>
-      </View>
+      </GlassCard>
 
       {/* ── Featured Tournament ── */}
       <View style={styles.featuredCard}>
@@ -200,7 +203,7 @@ const UserHomeContent = () => {
       </View>
 
       {/* ── Live Activity (full width, after featured card) ── */}
-      <View style={styles.sectionCard}>
+      <GlassCard style={styles.sectionCard}>
         <View style={styles.colHeaderRow}>
           <View style={styles.colTitleRow}>
             <Ionicons name="pulse-outline" size={13} color={theme.success} />
@@ -227,8 +230,9 @@ const UserHomeContent = () => {
             <Text style={styles.activityTime}>{item.timeAgo}</Text>
           </View>
         ))}
-      </View>
+      </GlassCard>
     </ScrollView>
+    </GlassBackground>
   );
 };
 

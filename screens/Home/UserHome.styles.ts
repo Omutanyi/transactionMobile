@@ -5,7 +5,7 @@ export const createStyles = (theme: AppTheme, topInset: number = 0) =>
   StyleSheet.create({
     scroll: {
       flex: 1,
-      backgroundColor: theme.background,
+      backgroundColor: 'transparent',
     },
 
     // ── Welcome Header ──────────────────────────────────────────
@@ -15,7 +15,7 @@ export const createStyles = (theme: AppTheme, topInset: number = 0) =>
       paddingHorizontal: 16,
       paddingTop: topInset + (Platform.OS === 'ios' ? 8 : 12),
       paddingBottom: 14,
-      backgroundColor: theme.background,
+      backgroundColor: 'transparent',
     },
     avatarWrapper: {
       position: 'relative',
@@ -74,7 +74,6 @@ export const createStyles = (theme: AppTheme, topInset: number = 0) =>
       flex: 1,
       borderRadius: 16,
       padding: 16,
-      backgroundColor: theme.card,
       borderWidth: 1.5,
       minHeight: 148,
       overflow: 'hidden',
@@ -86,6 +85,7 @@ export const createStyles = (theme: AppTheme, topInset: number = 0) =>
       shadowOpacity: 0.35,
       shadowRadius: 10,
       elevation: 6,
+      backgroundColor: theme.primary + '11',
     },
     actionCardPurple: {
       borderColor: theme.secondary,
@@ -94,6 +94,7 @@ export const createStyles = (theme: AppTheme, topInset: number = 0) =>
       shadowOpacity: 0.35,
       shadowRadius: 10,
       elevation: 6,
+      backgroundColor: theme.secondary + '11',
     },
     actionIconWrapper: {
       marginBottom: 10,

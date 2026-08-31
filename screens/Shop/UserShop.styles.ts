@@ -19,7 +19,7 @@ export const createStyles = (theme: AppTheme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.background,
+      backgroundColor: 'transparent',
     },
 
     // ── Search bar ──────────────────────────────────────────────────

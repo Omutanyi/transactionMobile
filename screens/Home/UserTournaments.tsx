@@ -7,6 +7,8 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { AppTheme } from '../../theme';
 import { createStyles, getHeaderOptions, RANK_COLORS, RankKey } from './UserTournaments.styles';
 import AppLogo from '../../components/AppLogo';
+import GlassBackground from '../../components/GlassBackground';
+import GlassCard from '../../components/GlassCard';
 import TournamentDetails from '../Tournaments/TournamentDetails';
 import { request } from '../../requests';
 import apis from '../../api';
@@ -149,6 +151,7 @@ const UserTournamentsContent = () => {
   const pad = (n: number) => String(n).padStart(2, '0');
 
   return (
+    <GlassBackground>
     <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContent}>
         {CATEGORIES.map(cat => {
@@ -275,6 +278,7 @@ const UserTournamentsContent = () => {
         <Ionicons name="chevron-forward" size={16} color={theme.subText} />
       </TouchableOpacity>
     </ScrollView>
+    </GlassBackground>
   );
 };
 

@@ -86,7 +86,7 @@ const ToastItem: React.FC<Props> = ({ toast, onDismiss }) => {
       ]}
       pointerEvents="box-none"
     >
-      <View style={[styles.card, { borderColor: meta.accent }]}>
+      <View style={[styles.card, { borderColor: 'transparent' }]}>
         <View style={[styles.accentBar, { backgroundColor: meta.accent }]} />
         <View style={[styles.iconWrap, { backgroundColor: `${meta.accent}1A` }]}>
           <Ionicons name={meta.icon as any} size={20} color={meta.accent} />

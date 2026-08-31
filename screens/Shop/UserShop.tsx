@@ -17,6 +17,7 @@ import {
   BadgeKey,
 } from './UserShop.styles';
 import AppLogo from '../../components/AppLogo';
+import GlassBackground from '../../components/GlassBackground';
 
 const Stack = createStackNavigator();
 
@@ -241,6 +242,7 @@ const UserShopContent = () => {
   };
 
   return (
+    <GlassBackground>
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
 
@@ -366,6 +368,7 @@ const UserShopContent = () => {
 
       </ScrollView>
     </View>
+    </GlassBackground>
   );
 };
 

@@ -13,7 +13,7 @@ export const createStyles = (theme: AppTheme) =>
   StyleSheet.create({
     scroll: {
       flex: 1,
-      backgroundColor: theme.background,
+      backgroundColor: 'transparent',
     },
 
     // ── Category filter chips ─────────────────────────────────────

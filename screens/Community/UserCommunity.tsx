@@ -16,6 +16,8 @@ import {
   STORY_RING_COLORS,
 } from './UserCommunity.styles';
 import AppLogo from '../../components/AppLogo';
+import GlassBackground from '../../components/GlassBackground';
+import GlassCard from '../../components/GlassCard';
 
 const Stack = createStackNavigator();
 
@@ -129,6 +131,7 @@ const UserCommunityContent = () => {
   const [activeTab, setActiveTab] = useState('Feed');
 
   return (
+    <GlassBackground>
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
 
@@ -335,6 +338,7 @@ const UserCommunityContent = () => {
         <Ionicons name="add" size={26} color="#fff" />
       </TouchableOpacity>
     </View>
+    </GlassBackground>
   );
 };
 
