@@ -30,6 +30,11 @@ const TYPES: { id: string; label: string; icon: IconName }[] = [
   { id: 'round_robin', label: 'ROUND\nROBIN', icon: 'sync-outline' },
 ];
 
+const LOCATIONS: { id: string; label: string; icon: IconName }[] = [
+  { id: 'online', label: 'ONLINE', icon: 'globe-outline' },
+  { id: 'local', label: 'IN-SHOP', icon: 'storefront-outline' },
+];
+
 const PARTICIPANT_OPTIONS = [8, 16, 32, 64, 128];
 const NAME_MAX = 50;
 const DESC_MAX = 300;
@@ -52,6 +57,7 @@ const CreateTournamentContent = () => {
   const [name, setName] = useState('Legends Arena Cup');
   const [description, setDescription] = useState('Compete against the best and prove you are the ultimate champion!');
   const [type, setType] = useState('single_elimination');
+  const [locationType, setLocationType] = useState<'online' | 'local'>('online');
   const [prize, setPrize] = useState('1000');
   const [entryFee, setEntryFee] = useState<'free' | 'premium'>('premium');
   const [participants, setParticipants] = useState(16);
@@ -154,6 +160,7 @@ const CreateTournamentContent = () => {
         entryFee: entryFee === 'premium' ? 10 : 0,
         maxParticipants: participants,
         tournamentType: type,
+        locationType,
         description: description.trim(),
       };
       await request(apis.tournaments, { method: 'POST', body: JSON.stringify(body) });
@@ -268,6 +275,21 @@ const CreateTournamentContent = () => {
                 <TouchableOpacity key={t.id} style={[styles.typeCard, active && styles.typeCardActive]} onPress={() => setType(t.id)} activeOpacity={0.85}>
                   <Ionicons name={t.icon} size={20} color={active ? theme.primary : theme.subText} />
                   <Text style={[styles.typeLabel, active && styles.typeLabelActive]}>{t.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>HOSTING LOCATION</Text>
+          <View style={styles.typeRow}>
+            {LOCATIONS.map(loc => {
+              const active = locationType === loc.id;
+              return (
+                <TouchableOpacity key={loc.id} style={[styles.typeCard, active && styles.typeCardActive]} onPress={() => setLocationType(loc.id as 'online' | 'local')} activeOpacity={0.85}>
+                  <Ionicons name={loc.icon} size={20} color={active ? theme.primary : theme.subText} />
+                  <Text style={[styles.typeLabel, active && styles.typeLabelActive]}>{loc.label}</Text>
                 </TouchableOpacity>
               );
             })}

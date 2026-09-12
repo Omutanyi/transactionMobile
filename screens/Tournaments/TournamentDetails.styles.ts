@@ -27,12 +27,12 @@ export const createStyles = (theme: AppTheme) =>
       borderColor: theme.info + '40',
     },
     heroImage: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       width: '100%',
       height: '100%',
     },
     heroOverlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: 'rgba(10,12,26,0.7)',
     },
     heroContent: {

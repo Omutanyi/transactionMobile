@@ -112,12 +112,12 @@ export const createStyles = (theme: AppTheme) =>
       elevation: 7,
     },
     gameCardImage: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       width: '100%',
       height: '100%',
     },
     gameCardOverlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       // backgroundColor: 'rgba(8,10,22,0.55)',
       justifyContent: 'flex-end',
       padding: 8,

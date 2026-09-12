@@ -67,7 +67,7 @@ const UserHomeContent = () => {
 
   return (
     <GlassBackground>
-    <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
       {/* ── Welcome Header ── */}
       <View style={styles.header}>
         <View style={styles.avatarWrapper}>
@@ -79,8 +79,8 @@ const UserHomeContent = () => {
           <Text style={styles.welcomeName}>CHAMPION!</Text>
           <Text style={styles.welcomeSub}>Ready to dominate? 🎮</Text>
         </View>
-        <TouchableOpacity>
-          <Ionicons name="notifications-outline" size={26} color={theme.primary} />
+        <TouchableOpacity style={styles.notifBtn} activeOpacity={0.8} accessibilityLabel="Notifications">
+          <Ionicons name="notifications-outline" size={22} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
@@ -97,29 +97,37 @@ const UserHomeContent = () => {
           onPress={() => navigation.navigate('CreateTournament')}
           activeOpacity={0.85}
         >
-          <View style={styles.actionIconWrapper}>
-            <Ionicons name="trophy-outline" size={36} color={theme.rankGold} />
+          <View style={styles.actionDecoCyan} />
+          <View style={styles.actionTag}>
+            <Text style={[styles.actionTagText, styles.actionTagCyan]}>CREATE</Text>
+          </View>
+          <View style={[styles.actionIconBadge, styles.actionIconBadgeCyan]}>
+            <Ionicons name="trophy-outline" size={28} color={theme.rankGold} />
           </View>
           <Text style={styles.actionTitle}>TOURNAMENTS</Text>
           <Text style={styles.actionSubtitle}>{'Compete & Win\nBig Prizes'}</Text>
           <View style={styles.actionArrowCyan}>
-            <Ionicons name="chevron-forward" size={16} color="#fff" />
+            <Ionicons name="chevron-forward" size={18} color="#fff" />
           </View>
         </TouchableOpacity>
 
-        {/* Play Match */}
+        {/* Instant Match (Play Match) */}
         <TouchableOpacity
           style={[styles.actionCard, styles.actionCardPurple]}
-          onPress={() => navigation.navigate('OneOnOneMatch')}
+          onPress={() => navigation.navigate('InstantMatch')}
           activeOpacity={0.85}
         >
-          <View style={styles.actionIconWrapper}>
-            <Ionicons name="game-controller-outline" size={36} color={theme.rankBronze} />
+          <View style={styles.actionDecoPurple} />
+          <View style={styles.actionTag}>
+            <Text style={[styles.actionTagText, styles.actionTagPurple]}>PLAY</Text>
           </View>
-          <Text style={styles.actionTitle}>PLAY MATCH</Text>
-          <Text style={styles.actionSubtitle}>{'Jump into\naction now!'}</Text>
+          <View style={[styles.actionIconBadge, styles.actionIconBadgePurple]}>
+            <Ionicons name="flash-outline" size={28} color={theme.rankBronze} />
+          </View>
+          <Text style={styles.actionTitle}>INSTANT MATCH</Text>
+          <Text style={styles.actionSubtitle}>{'Start a match\nwith your crew!'}</Text>
           <View style={styles.actionArrowPurple}>
-            <Ionicons name="chevron-forward" size={16} color="#fff" />
+            <Ionicons name="chevron-forward" size={18} color="#fff" />
           </View>
         </TouchableOpacity>
       </View>
@@ -155,17 +163,17 @@ const UserHomeContent = () => {
         {/* Mini Stats */}
         <View style={styles.miniStatsRow}>
           <View style={styles.miniStat}>
-            <Ionicons name="trophy-outline" size={14} color={theme.rankGold} />
+            <Ionicons name="trophy-outline" size={18} color={theme.rankGold} />
             <Text style={styles.miniStatValue}>{quickStats.wins}</Text>
             <Text style={styles.miniStatLabel}>WINS</Text>
           </View>
           <View style={styles.miniStat}>
-            <Ionicons name="swap-horizontal-outline" size={14} color={theme.info} />
+            <Ionicons name="swap-horizontal-outline" size={18} color={theme.info} />
             <Text style={styles.miniStatValue}>{quickStats.kdRatio}</Text>
             <Text style={styles.miniStatLabel}>K/D RATIO</Text>
           </View>
           <View style={styles.miniStat}>
-            <Ionicons name="star-outline" size={14} color={theme.warning} />
+            <Ionicons name="star-outline" size={18} color={theme.warning} />
             <Text style={styles.miniStatValue}>{quickStats.trophies}</Text>
             <Text style={styles.miniStatLabel}>TROPHIES</Text>
           </View>
@@ -222,7 +230,7 @@ const UserHomeContent = () => {
             ]}
           >
             <Image source={item.image} style={styles.activityThumb} />
-            <View style={{ flex: 1 }}>
+            <View style={styles.activityInfo}>
               <Text style={styles.activityUsername}>{item.username}</Text>
               <Text style={styles.activityAction}>{item.action}</Text>
               <Text style={styles.activityGame}>{item.game}</Text>

@@ -9,6 +9,7 @@ import UserProfile from '../Profile/UserProfile';
 import UserHome from '../Home/UserHome';
 import UserTournaments from '../Home/UserTournaments';
 import OneOnOneMatchScreen from '../Matches/OneOnOneMatchScreen';
+import InstantMatchScreen from '../Matches/InstantMatchScreen';
 import UserCommunity from '../Community/UserCommunity';
 import UserShop from '../Shop/UserShop';
 import CreateTournament from '../Tournaments/CreateTournament';
@@ -82,6 +83,7 @@ const UserDashboard: React.FC = () => {
     <Stack.Navigator>
       <Stack.Screen name="UserTabs" component={UserTabs} options={{ headerShown: false }} />
       <Stack.Screen name="OneOnOneMatch" component={OneOnOneMatchScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="InstantMatch" component={InstantMatchScreen} options={{ headerShown: false }} />
       <Stack.Screen name="CreateTournament" component={CreateTournament} options={{ headerShown: false }} />
     </Stack.Navigator>
   );

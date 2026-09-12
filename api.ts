@@ -41,6 +41,19 @@ type ApiEndpoints = {
     matchOpponents: string;
     matchAvailablePlayers: string;
 
+    // Instant Match / Wager
+    instantMatch: string;
+    matchStake: string;
+    matchEscrow: string;
+    matchRematch: (id: string | number) => string;
+    matchSeries: (id: string | number) => string;
+    matchNotify: (id: string | number) => string;
+    matchEscrowHold: (id: string | number) => string;
+    matchEscrowRelease: (id: string | number) => string;
+    matchEscrowRefund: (id: string | number) => string;
+    matchChalkmen: string;
+    matchNearbyPlayers: string;
+
     // Match Requests
     matchRequests: string;
     matchRequestsSent: string;
@@ -102,6 +115,19 @@ apis.matchStats = apis('/match/stats');
 apis.matchStreak = apis('/match/streak');
 apis.matchOpponents = apis('/match/opponents');
 apis.matchAvailablePlayers = apis('/match/available');
+
+// Instant Match / Wager
+apis.instantMatch = apis('/match/instant');
+apis.matchStake = apis('/match/stake');
+apis.matchEscrow = apis('/match/escrow');
+apis.matchRematch = (id) => `${baseUrl}/match/${id}/rematch`;
+apis.matchSeries = (id) => `${baseUrl}/match/${id}/series`;
+apis.matchNotify = (id) => `${baseUrl}/match/${id}/notify`;
+apis.matchEscrowHold = (id) => `${baseUrl}/match/${id}/escrow`;
+apis.matchEscrowRelease = (id) => `${baseUrl}/match/${id}/escrow/release`;
+apis.matchEscrowRefund = (id) => `${baseUrl}/match/${id}/escrow/refund`;
+apis.matchChalkmen = apis('/match/chalkmen');
+apis.matchNearbyPlayers = apis('/match/nearby');
 
 // Match Requests
 apis.matchRequests = apis('/match/requests');

@@ -66,7 +66,7 @@ export const createStyles = (theme: AppTheme) =>
       height: '100%',
     },
     gameImageOverlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: 'rgba(8,10,22,0.28)',
     },
     selectedBadge: {

@@ -139,3 +139,43 @@ The implementation includes comprehensive mock data for:
 - Social features (following players)
 
 This update provides a solid foundation for a competitive gaming platform with proper match organization and player engagement features.
+
+---
+
+# Instant Match / Wager System (Update)
+
+## Overview
+A new **"Start Instant Match"** flow lets physically co-located players at a game shop ("gaming lounge") start a match **immediately**, with optional **cash wagers** secured by a **chalkman** (shop attendant). It supports **1v1** and **Party** (multi-player) matches, **Best-of series** rules, **stake/escrow** management, **phone notifications**, and **rematches**.
+
+## New Files
+- **`screens/Matches/InstantMatchScreen.tsx`** — 4-step instant match setup (game → match setup → stake → opponents)
+- **`screens/Matches/InstantMatchScreen.styles.ts`** — styles
+- **`services/match.ts`** — match/escrow/stake API service (normalizes PascalCase)
+- **`docs/INSTANT_MATCH_PROMPT.md`** — reusable AI implementation prompt
+
+## Updated Files
+- **`types/index.ts`** — added `MatchMode`, `SeriesFormat`, `StakeMethod`, `StakeConfig`, `SeriesConfig`, `EscrowRecord`, `InstantMatch`, `InstantMatchDraft`, `ChalkmanOperation`
+- **`api.ts`** — added endpoints: `/match/instant`, `/match/stake`, `/match/escrow`, `/match/{id}/rematch`, `/match/{id}/series`, `/match/{id}/notify`, `/match/{id}/escrow`, `/match/{id}/escrow/release`, `/match/{id}/escrow/refund`, `/match/chalkmen`, `/match/nearby`
+- **`screens/Home/UserHome.tsx`** — "PLAY MATCH" card rebranded to **"INSTANT MATCH"** → navigates to `InstantMatch`
+- **`screens/Dashboard/UserDashboard.tsx`** — registered `InstantMatch` screen in the nav stack
+- **`tsconfig.json`** — explicitly set `"jsx": "react-jsx"` (inherited from Expo base)
+
+## Scenarios Covered
+1. **1v1 with a friend** — repeatable (rematch), phone notifications, stake paid instantly **or** held by chalkman until settled, Best-of-1/3/5 rules.
+2. **Group of friends** — 2-player-only games restrict to 1v1; multi-player games (Pool, FPS, Battle Royale) support **Party** mode with a player-count stepper up to the game's max.
+
+## Instant Match Flow
+1. **Select Game** — horizontal carousel with a **max-players badge** (`2P`, `4P`, `8P`…).
+2. **Match Setup** — `1v1 Duel` / `Party` (Party disabled for 2-player games) + player-count stepper + series format (`BO1`/`BO3`/`BO5`).
+3. **Stake & Wager** — `Instant Pay` or `Chalkman Escrow`, amount input with quick chips, chalkman picker when escrow.
+4. **Opponents** — invite code + "In this shop" nearby players list, selected-opponent chips.
+
+## Backend API Contract
+See the detailed contract in **`docs/INSTANT_MATCH_PROMPT.md` §4** and the frontend service in **`services/match.ts`**. Key endpoints:
+- `POST /match/instant` — create instant match
+- `POST /match/stake` — secure stake
+- `POST /match/{id}/escrow` / `/release` / `/refund` — chalkman escrow lifecycle
+- `PUT /match/{id}/series` — update series score
+- `POST /match/{id}/notify` — send phone notifications
+- `POST /match/{id}/rematch` — create a rematch
+- `GET /match/chalkmen`, `GET /match/nearby` — chalkmen & in-shop players
