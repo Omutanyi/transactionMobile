@@ -464,6 +464,137 @@ export const createStyles = (theme: AppTheme) =>
       marginLeft: 9,
     },
 
+    // ── Entry / wager method (Free / Instant / Escrow) ──────────────
+    entryMethodRow: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    entryMethodCard: {
+      flex: 1,
+      backgroundColor: theme.card,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: theme.border,
+      paddingVertical: 12,
+      paddingHorizontal: 5,
+      alignItems: 'center',
+    },
+    entryMethodCardActive: {
+      borderColor: theme.info,
+      backgroundColor: theme.info + '14',
+      shadowColor: theme.info,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.35,
+      shadowRadius: 7,
+      elevation: 4,
+    },
+    entryMethodLabel: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: theme.subText,
+      letterSpacing: 0.3,
+      textAlign: 'center',
+      marginTop: 5,
+      lineHeight: 13,
+    },
+    entryMethodLabelActive: {
+      color: theme.info,
+    },
+
+    // ── Escrow / chalkman info card ─────────────────────────────────
+    escrowCard: {
+      backgroundColor: theme.statCard,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.warning + '55',
+      padding: 12,
+      marginTop: 10,
+    },
+    escrowTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 6,
+    },
+    escrowTitle: {
+      fontSize: 11,
+      fontWeight: 'bold',
+      color: theme.warning,
+      letterSpacing: 0.5,
+      marginLeft: 6,
+    },
+    escrowDesc: {
+      fontSize: 11,
+      color: theme.subText,
+      lineHeight: 16,
+      marginBottom: 4,
+    },
+    selectRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+    },
+    selectAvatar: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      marginRight: 10,
+      backgroundColor: theme.border,
+    },
+    selectInfo: {
+      flex: 1,
+    },
+    selectName: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: theme.text,
+    },
+    selectStatus: {
+      fontSize: 10,
+      color: theme.success,
+      fontWeight: '600',
+      marginTop: 1,
+    },
+
+    // ── Shop picker (in-shop tournaments) ───────────────────────────
+    shopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.inputBackground,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: theme.border,
+      padding: 10,
+      marginTop: 6,
+    },
+    shopRowActive: {
+      borderColor: theme.primary,
+      backgroundColor: theme.primary + '12',
+    },
+    shopIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: 9,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 10,
+      backgroundColor: theme.primary + '20',
+    },
+    shopInfo: {
+      flex: 1,
+    },
+    shopName: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      color: theme.text,
+    },
+    shopAddress: {
+      fontSize: 10,
+      color: theme.subText,
+      marginTop: 1,
+    },
+
     // ── Header pieces ───────────────────────────────────────────────
     headerLeftRow: {
       flexDirection: 'row',

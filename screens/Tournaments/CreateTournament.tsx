@@ -11,10 +11,10 @@ import { AppTheme } from '../../theme';
 import { createStyles, getHeaderOptions } from './CreateTournament.styles';
 import AppLogo from '../../components/AppLogo';
 import { fetchGames } from '../../services/games';
-import { request } from '../../requests';
-import apis from '../../api';
+import { fetchShops, fetchTournamentChalkmen, createTournament } from '../../services/tournament';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { toast } from '../../utils/ToastService';
+import { Shop, Player, TournamentEntryMethod } from '../../types';
 
 const Stack = createStackNavigator();
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -33,6 +33,12 @@ const TYPES: { id: string; label: string; icon: IconName }[] = [
 const LOCATIONS: { id: string; label: string; icon: IconName }[] = [
   { id: 'online', label: 'ONLINE', icon: 'globe-outline' },
   { id: 'local', label: 'IN-SHOP', icon: 'storefront-outline' },
+];
+
+const ENTRY_METHODS: { id: TournamentEntryMethod; label: string; icon: IconName }[] = [
+  { id: 'free', label: 'FREE', icon: 'gift-outline' },
+  { id: 'instant', label: 'INSTANT\nPAY', icon: 'flash-outline' },
+  { id: 'escrow', label: 'CHALKMAN\nESCROW', icon: 'shield-checkmark-outline' },
 ];
 
 const PARTICIPANT_OPTIONS = [8, 16, 32, 64, 128];
@@ -59,7 +65,12 @@ const CreateTournamentContent = () => {
   const [type, setType] = useState('single_elimination');
   const [locationType, setLocationType] = useState<'online' | 'local'>('online');
   const [prize, setPrize] = useState('1000');
-  const [entryFee, setEntryFee] = useState<'free' | 'premium'>('premium');
+  const [entryMethod, setEntryMethod] = useState<TournamentEntryMethod>('instant');
+  const [entryAmount, setEntryAmount] = useState('10');
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
+  const [chalkmen, setChalkmen] = useState<Player[]>([]);
+  const [selectedChalkman, setSelectedChalkman] = useState<Player | null>(null);
   const [participants, setParticipants] = useState(16);
   const [startDate, setStartDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
   const [endDate, setEndDate] = useState(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString());
@@ -85,6 +96,32 @@ const CreateTournamentContent = () => {
       .catch(() => {});
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (locationType !== 'local') return;
+    let active = true;
+    fetchShops()
+      .then(list => {
+        if (!active || !list.length) return;
+        setShops(list);
+        setSelectedShop(prev => prev ?? list[0]);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [locationType]);
+
+  useEffect(() => {
+    if (entryMethod !== 'escrow' || !selectedGameId) return;
+    let active = true;
+    fetchTournamentChalkmen(selectedGameId)
+      .then(list => {
+        if (!active || !list.length) return;
+        setChalkmen(list);
+        setSelectedChalkman(prev => prev ?? list[0]);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [entryMethod, selectedGameId]);
 
   useEffect(() => {
     // Progress the stepper when the user fills fields
@@ -148,22 +185,42 @@ const CreateTournamentContent = () => {
       toast.error('Please enter a valid prize pool');
       return;
     }
+    if (locationType === 'local' && !selectedShop) {
+      toast.error('Please select a game shop');
+      return;
+    }
+    if (entryMethod === 'escrow' && !selectedChalkman) {
+      toast.error('Please select a chalkman to hold the pot');
+      return;
+    }
 
     setCreating(true);
     try {
+      const entry = entryMethod === 'free' ? 0 : parseInt(entryAmount || '0', 10) || 0;
       const body = {
         name: name.trim(),
         gameId: selectedGameId,
         startDate,
         endDate,
         prizePool: parseInt(prize) || 0,
-        entryFee: entryFee === 'premium' ? 10 : 0,
+        entryFee: entry,
         maxParticipants: participants,
         tournamentType: type,
         locationType,
+        location: locationType,
         description: description.trim(),
+        entryMethod,
+        ...(locationType === 'local' && selectedShop ? { shopId: selectedShop.id } : {}),
+        ...(entryMethod === 'escrow' && selectedChalkman ? { chalkmanId: selectedChalkman.id } : {}),
+        stake: {
+          amount: entry,
+          currency: 'USD',
+          method: entryMethod,
+          secured: entryMethod === 'free',
+          ...(entryMethod === 'escrow' && selectedChalkman ? { escrowId: selectedChalkman.id } : {}),
+        },
       };
-      await request(apis.tournaments, { method: 'POST', body: JSON.stringify(body) });
+      await createTournament(body as any);
       toast.success('Tournament created successfully!');
       navigation.goBack();
     } catch (e: any) {
@@ -296,26 +353,103 @@ const CreateTournamentContent = () => {
           </View>
         </View>
 
-        <View style={[styles.halfRow, styles.fieldGroup]}>
-          <View style={styles.half}>
-            <Text style={styles.fieldLabel}>PRIZE POOL</Text>
-            <View style={styles.inputWrapper}>
-              <Text style={{ color: theme.success, fontWeight: 'bold', fontSize: 14 }}>$</Text>
-              <TextInput style={styles.input} value={prize} onChangeText={t => setPrize(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" placeholder="0" placeholderTextColor={theme.subText} />
-            </View>
-          </View>
-          <View style={styles.half}>
-            <Text style={styles.fieldLabel}>ENTRY FEE</Text>
-            <View style={styles.entryToggle}>
-              <TouchableOpacity style={[styles.entrySeg, entryFee === 'free' && styles.entrySegActive]} onPress={() => setEntryFee('free')} activeOpacity={0.85}>
-                <Text style={[styles.entrySegText, entryFee === 'free' && styles.entrySegTextActive]}>FREE</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.entrySeg, entryFee === 'premium' && styles.entryPremiumSegActive]} onPress={() => setEntryFee('premium')} activeOpacity={0.85}>
-                <Text style={[styles.entrySegText, entryFee === 'premium' && styles.entrySegTextActive]}>PREMIUM</Text>
-              </TouchableOpacity>
-            </View>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>PRIZE POOL</Text>
+          <View style={styles.inputWrapper}>
+            <Text style={{ color: theme.success, fontWeight: 'bold', fontSize: 14 }}>$</Text>
+            <TextInput style={styles.input} value={prize} onChangeText={t => setPrize(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" placeholder="0" placeholderTextColor={theme.subText} />
           </View>
         </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>ENTRY / WAGER</Text>
+          <View style={styles.entryMethodRow}>
+            {ENTRY_METHODS.map(em => {
+              const active = entryMethod === em.id;
+              return (
+                <TouchableOpacity
+                  key={em.id}
+                  style={[styles.entryMethodCard, active && styles.entryMethodCardActive]}
+                  onPress={() => setEntryMethod(em.id)}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name={em.icon} size={18} color={active ? theme.info : theme.subText} />
+                  <Text style={[styles.entryMethodLabel, active && styles.entryMethodLabelActive]}>{em.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {entryMethod !== 'free' && (
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>ENTRY AMOUNT</Text>
+            <View style={styles.inputWrapper}>
+              <Text style={{ color: theme.success, fontWeight: 'bold', fontSize: 14 }}>$</Text>
+              <TextInput style={styles.input} value={entryAmount} onChangeText={t => setEntryAmount(t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" placeholder="0" placeholderTextColor={theme.subText} />
+            </View>
+          </View>
+        )}
+
+        {locationType === 'local' && (
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>SELECT GAME SHOP</Text>
+            {shops.length > 0 ? shops.map(shop => {
+              const active = selectedShop?.id === shop.id;
+              return (
+                <TouchableOpacity
+                  key={shop.id}
+                  style={[styles.shopRow, active && styles.shopRowActive]}
+                  onPress={() => setSelectedShop(shop)}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.shopIcon}>
+                    <Ionicons name="storefront-outline" size={16} color={theme.primary} />
+                  </View>
+                  <View style={styles.shopInfo}>
+                    <Text style={styles.shopName}>{shop.name}</Text>
+                    <Text style={styles.shopAddress}>
+                      {shop.address ?? 'On site'}{shop.chalkmanName ? ` • ${shop.chalkmanName} on duty` : ''}
+                    </Text>
+                  </View>
+                  <Ionicons name={active ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={active ? theme.primary : theme.subText} />
+                </TouchableOpacity>
+              );
+            }) : (
+              <Text style={styles.escrowDesc}>No shops available right now.</Text>
+            )}
+          </View>
+        )}
+
+        {entryMethod === 'escrow' && (
+          <View style={styles.escrowCard}>
+            <View style={styles.escrowTitleRow}>
+              <Ionicons name="shield-checkmark-outline" size={14} color={theme.warning} />
+              <Text style={styles.escrowTitle}>CHALKMAN ESCROW</Text>
+            </View>
+            <Text style={styles.escrowDesc}>
+              The shop attendant (chalkman) holds the ${entryAmount || '0'} entry pot until the tournament is settled.
+            </Text>
+            {chalkmen.length > 0 ? chalkmen.map(cm => {
+              const active = selectedChalkman?.id === cm.id;
+              return (
+                <TouchableOpacity key={cm.id} style={styles.selectRow} onPress={() => setSelectedChalkman(cm)} activeOpacity={0.8}>
+                  <Image
+                    source={cm.avatar ? { uri: String(cm.avatar) } : require('../../assets/avatar.jpg')}
+                    style={styles.selectAvatar}
+                  />
+                  <View style={styles.selectInfo}>
+                    <Text style={styles.selectName}>{cm.username}</Text>
+                    <Text style={styles.selectStatus}>{active ? 'Selected • Ready to hold' : 'Available'}</Text>
+                  </View>
+                  <Ionicons name={active ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={active ? theme.primary : theme.subText} />
+                </TouchableOpacity>
+              );
+            }) : (
+              <Text style={[styles.escrowDesc, { marginTop: 6 }]}>No chalkman available. Try again later.</Text>
+            )}
+          </View>
+        )}
 
         <View style={[styles.halfRow, styles.fieldGroup]}>
           <View style={styles.half}>

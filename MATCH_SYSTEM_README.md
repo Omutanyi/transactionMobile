@@ -179,3 +179,30 @@ See the detailed contract in **`docs/INSTANT_MATCH_PROMPT.md` §4** and the fron
 - `POST /match/{id}/notify` — send phone notifications
 - `POST /match/{id}/rematch` — create a rematch
 - `GET /match/chalkmen`, `GET /match/nearby` — chalkmen & in-shop players
+
+---
+
+# Tournament System (Update)
+
+## Overview
+The tournament section now supports **online** and **in-shop (local)** tournaments, **free / instant / chalkman-escrow** entry, and series play. A group of friends at a game shop can spin up a tournament and have the **chalkman** hold the entry pot until it is settled.
+
+## New Files
+- **`services/tournament.ts`** — tournament API service (create/fetch/register/stake/escrow/start/bracket/shops/chalkmen)
+- **`docs/TOURNAMENT_BACKEND_PROMPT.md`** — the backend implementation prompt for the tournament API
+
+## Updated Files
+- **`types/index.ts`** — added `TournamentFormat`, `TournamentLocation`, `TournamentStatus`, `TournamentEntryMethod`, `TournamentStake`, `Shop`, `BracketMatch`, `Tournament`, `TournamentDraft`
+- **`api.ts`** — added: `/tournament/{id}/stake`, `/tournament/{id}/escrow` (+ `/release`/`/refund`), `/tournament/{id}/start`, `/tournament/{id}/bracket`, `/tournament/shops`, `/tournament/{id}/chalkmen`
+- **`screens/Tournaments/CreateTournament.tsx`** — added **HOSTING LOCATION** (Online / In-Shop), **ENTRY / WAGER** method (Free / Instant Pay / Chalkman Escrow), entry amount input, **shop picker** (when in-shop), and **chalkman picker** (when escrow)
+- **`screens/Tournaments/CreateTournament.styles.ts`** — styles for the entry method, escrow card, and shop picker
+
+## Create Tournament Flow
+1. **Select Game** (grid)
+2. **Settings** — name, description, tournament type (single/double elimination, round robin), **hosting location** (online vs in-shop)
+3. **Entry / Wager** — `Free` / `Instant Pay` / `Chalkman Escrow`; entry amount; shop picker (in-shop); chalkman picker (escrow)
+4. Prize pool, max participants, start date/time → **Create Tournament**
+
+## Backend Contract
+See **`docs/TOURNAMENT_BACKEND_PROMPT.md`** for the full REST contract, data models, validation rules, bracket generation, and payout logic.
+</content>

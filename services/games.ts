@@ -5,6 +5,8 @@ export interface GameOption {
   id: string;
   name: string;
   image: any;
+  /** Max players supported by the game (undefined when the API omits it). */
+  maxPlayers?: number;
 }
 
 /**
@@ -25,10 +27,13 @@ export async function fetchGames(fallbackImages: any[]): Promise<GameOption[]> {
         g?.ImageUrl ?? g?.imageUrl ?? g?.image ?? g?.icon ?? g?.thumbnail ?? g?.logo;
       const id = g?.Id ?? g?.id ?? g?._id ?? g?.slug ?? g?.Name ?? g?.name ?? i;
       const name = String(g?.Name ?? g?.name ?? g?.title ?? 'Game').trim();
+      const rawMax = g?.MaxPlayers ?? g?.maxPlayers ?? g?.PlayerCount ?? g?.playerCount;
+      const maxPlayers = Number(rawMax);
       return {
         id: String(id),
         name,
         image: url ? { uri: url } : fallbackImages[i % fallbackImages.length],
+        ...(Number.isFinite(maxPlayers) && maxPlayers > 0 ? { maxPlayers } : {}),
       };
     });
 }

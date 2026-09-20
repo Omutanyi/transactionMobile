@@ -33,6 +33,14 @@ type ApiEndpoints = {
     tournamentRegister: (id: string | number) => string;
     tournamentParticipants: (id: string | number) => string;
     tournamentChat: (id: string | number) => string;
+    tournamentStake: (id: string | number) => string;
+    tournamentEscrow: (id: string | number) => string;
+    tournamentEscrowRelease: (id: string | number) => string;
+    tournamentEscrowRefund: (id: string | number) => string;
+    tournamentStart: (id: string | number) => string;
+    tournamentBracket: (id: string | number) => string;
+    tournamentShops: string;
+    tournamentChalkmen: (id: string | number) => string;
 
     // Matches
     matches: string;
@@ -53,6 +61,12 @@ type ApiEndpoints = {
     matchEscrowRefund: (id: string | number) => string;
     matchChalkmen: string;
     matchNearbyPlayers: string;
+    matchShops: string;
+    matchWallet: string;
+    matchJoin: (id: string | number) => string;
+    matchJoinByCode: string;
+    matchResult: (id: string | number) => string;
+    matchCancel: (id: string | number) => string;
 
     // Match Requests
     matchRequests: string;
@@ -108,6 +122,14 @@ apis.tournamentDetail = (id) => `${baseUrl}/tournament/${id}`;
 apis.tournamentRegister = (id) => `${baseUrl}/tournament/${id}/register`;
 apis.tournamentParticipants = (id) => `${baseUrl}/tournament/${id}/participants`;
 apis.tournamentChat = (id) => `${baseUrl}/tournament/${id}/chat`;
+apis.tournamentStake = (id) => `${baseUrl}/tournament/${id}/stake`;
+apis.tournamentEscrow = (id) => `${baseUrl}/tournament/${id}/escrow`;
+apis.tournamentEscrowRelease = (id) => `${baseUrl}/tournament/${id}/escrow/release`;
+apis.tournamentEscrowRefund = (id) => `${baseUrl}/tournament/${id}/escrow/refund`;
+apis.tournamentStart = (id) => `${baseUrl}/tournament/${id}/start`;
+apis.tournamentBracket = (id) => `${baseUrl}/tournament/${id}/bracket`;
+apis.tournamentShops = apis('/tournament/shops');
+apis.tournamentChalkmen = (id) => `${baseUrl}/tournament/${id}/chalkmen`;
 
 // Matches
 apis.matches = apis('/match');
@@ -128,6 +150,12 @@ apis.matchEscrowRelease = (id) => `${baseUrl}/match/${id}/escrow/release`;
 apis.matchEscrowRefund = (id) => `${baseUrl}/match/${id}/escrow/refund`;
 apis.matchChalkmen = apis('/match/chalkmen');
 apis.matchNearbyPlayers = apis('/match/nearby');
+apis.matchShops = apis('/match/shops');
+apis.matchWallet = apis('/match/wallet');
+apis.matchJoin = (id) => `${baseUrl}/match/${id}/join`;
+apis.matchJoinByCode = apis('/match/join');
+apis.matchResult = (id) => `${baseUrl}/match/${id}/result`;
+apis.matchCancel = (id) => `${baseUrl}/match/${id}/cancel`;
 
 // Match Requests
 apis.matchRequests = apis('/match/requests');
