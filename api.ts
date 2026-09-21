@@ -67,6 +67,18 @@ type ApiEndpoints = {
     matchJoinByCode: string;
     matchResult: (id: string | number) => string;
     matchCancel: (id: string | number) => string;
+    /** Single match by id (used to preview a match before joining it). */
+    matchDetail: (id: string | number) => string;
+    /** Generate a shareable invite code the caller hands to other players. */
+    matchInviteCode: string;
+    /** Players in a shop who are open to play right now. */
+    matchOpenPlayers: string;
+    /** Ping the shop that the caller is (or is no longer) open to play. */
+    matchPresence: string;
+    /** Live board — every match currently running in one shop. */
+    matchShopLive: (shopId: string | number) => string;
+    /** One shop with its map coordinates and on-duty chalkman. */
+    matchShopDetail: (shopId: string | number) => string;
 
     // Match Requests
     matchRequests: string;
@@ -79,6 +91,8 @@ type ApiEndpoints = {
     shopAccessories: string;
     shopShops: string;
     shopPurchases: string;
+    /** Single shop record (used for the map pin / counter details). */
+    shopDetail: (id: string | number) => string;
 
     // Community
     communityFeed: string;
@@ -156,6 +170,12 @@ apis.matchJoin = (id) => `${baseUrl}/match/${id}/join`;
 apis.matchJoinByCode = apis('/match/join');
 apis.matchResult = (id) => `${baseUrl}/match/${id}/result`;
 apis.matchCancel = (id) => `${baseUrl}/match/${id}/cancel`;
+apis.matchDetail = (id) => `${baseUrl}/match/${id}`;
+apis.matchInviteCode = apis('/match/invite-code');
+apis.matchOpenPlayers = apis('/match/open-players');
+apis.matchPresence = apis('/match/presence');
+apis.matchShopLive = (shopId) => `${baseUrl}/match/shops/${shopId}/live`;
+apis.matchShopDetail = (shopId) => `${baseUrl}/match/shops/${shopId}`;
 
 // Match Requests
 apis.matchRequests = apis('/match/requests');
@@ -168,6 +188,7 @@ apis.shop = apis('/shop');
 apis.shopAccessories = apis('/shop');
 apis.shopShops = apis('/shop/shops');
 apis.shopPurchases = apis('/shop/purchases');
+apis.shopDetail = (id) => `${baseUrl}/shop/${id}`;
 
 // Community
 apis.communityFeed = apis('/community/feed');

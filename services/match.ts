@@ -11,9 +11,13 @@ import {
   MatchStatus,
   Player,
   Shop,
+  ShopPlayer,
+  ShopMatchSummary,
+  InviteCode,
   StakeMethod,
   WalletInfo,
 } from '../types';
+import { generateLocalInviteCode, normalizeInviteCode } from '../utils/inviteCode';
 
 // ── Normalizers ─────────────────────────────────────────────────────────
 
@@ -22,23 +26,69 @@ const num = (v: any, fallback = 0): number => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+const pick = (source: any, ...keys: string[]): any => {
+  for (const key of keys) {
+    const value = source?.[key];
+    if (value !== undefined && value !== null) return value;
+  }
+  return undefined;
+};
+
+/**
+ * The backend exposes the avatar under several names across endpoints
+ * (`AvatarUrl` on matches, `ProfileImageUrl` on tournament participants).
+ * Accept them all so avatars never silently disappear.
+ */
+const PROFILE_IMAGE_KEYS = [
+  'AvatarUrl',
+  'avatarUrl',
+  'ProfileImageUrl',
+  'profileImageUrl',
+  'ProfileImage',
+  'profileImage',
+  'Avatar',
+  'avatar',
+  'image',
+];
+
 const toPlayer = (p: any, i: number): Player => ({
-  id: String(p?.Id ?? p?.id ?? p?._id ?? i),
-  username: String(p?.Username ?? p?.username ?? p?.Name ?? p?.name ?? 'Player'),
-  avatar: p?.AvatarUrl ?? p?.avatarUrl ?? p?.avatar ?? p?.image,
-  rating: p?.Rating ?? p?.rating,
-  gamesPlayed: p?.GamesPlayed ?? p?.gamesPlayed,
-  winRate: p?.WinRate ?? p?.winRate,
-  isOnline: p?.IsOnline ?? p?.isOnline ?? true,
+  id: String(pick(p, 'Id', 'id', '_id') ?? i),
+  username: String(pick(p, 'Username', 'username', 'Name', 'name') ?? 'Player'),
+  avatar: pick(p, ...PROFILE_IMAGE_KEYS),
+  rating: pick(p, 'Rating', 'rating'),
+  gamesPlayed: pick(p, 'GamesPlayed', 'gamesPlayed'),
+  winRate: pick(p, 'WinRate', 'winRate'),
+  isOnline: pick(p, 'IsOnline', 'isOnline') ?? true,
 });
 
-const toShop = (s: any, i: number): Shop => ({
-  id: String(s?.Id ?? s?.id ?? s?._id ?? i),
-  name: String(s?.Name ?? s?.name ?? 'Game Shop'),
-  address: s?.Address ?? s?.address,
-  chalkmanName: s?.ChalkmanName ?? s?.chalkmanName,
-  isOnline: s?.IsOnline ?? s?.isOnline ?? true,
+/** Player row on the shop board — same shape plus presence flags. */
+const toShopPlayer = (p: any, i: number): ShopPlayer => ({
+  ...toPlayer(p, i),
+  openToPlay: pick(p, 'OpenToPlay', 'openToPlay', 'IsOpenToPlay', 'isOpenToPlay') ?? false,
+  minutesAgo: pick(p, 'MinutesAgo', 'minutesAgo', 'LastSeenMinutes', 'lastSeenMinutes'),
+  waitingForGameName: pick(p, 'WaitingForGameName', 'waitingForGameName', 'GameName', 'gameName'),
 });
+
+const toShop = (s: any, i: number): Shop => {
+  const latitude = Number(pick(s, 'Latitude', 'latitude', 'Lat', 'lat'));
+  const longitude = Number(pick(s, 'Longitude', 'longitude', 'Lng', 'lng', 'Lon', 'lon'));
+  const distanceKm = Number(pick(s, 'DistanceKm', 'distanceKm', 'Distance', 'distance'));
+  return {
+    id: String(pick(s, 'Id', 'id', '_id') ?? i),
+    name: String(pick(s, 'Name', 'name') ?? 'Game Shop'),
+    address: pick(s, 'Address', 'address'),
+    chalkmanName: pick(s, 'ChalkmanName', 'chalkmanName'),
+    isOnline: pick(s, 'IsOnline', 'isOnline') ?? true,
+    // 0,0 is in the Atlantic — treat it as "no coordinates supplied".
+    ...(Number.isFinite(latitude) && latitude !== 0 ? { latitude } : {}),
+    ...(Number.isFinite(longitude) && longitude !== 0 ? { longitude } : {}),
+    city: pick(s, 'City', 'city', 'Town', 'town'),
+    ...(Number.isFinite(distanceKm) && distanceKm >= 0 ? { distanceKm } : {}),
+    playerCount: pick(s, 'PlayerCount', 'playerCount', 'PlayersHere', 'playersHere'),
+    hasLiveMatches: pick(s, 'HasLiveMatches', 'hasLiveMatches', 'LiveMatches', 'liveMatches'),
+    phone: pick(s, 'Phone', 'phone', 'PhoneNumber', 'phoneNumber'),
+  };
+};
 
 const STAKE_METHODS: StakeMethod[] = ['none', 'wallet', 'instant', 'escrow', 'chalkman'];
 
@@ -94,6 +144,37 @@ const toInstantMatch = (m: any): InstantMatch => {
   };
 };
 
+/** One row of the live shop board. */
+export const toShopMatchSummary = (m: any): ShopMatchSummary => {
+  const series = m?.Series ?? m?.series ?? {};
+  const stake = toStake(m?.Stake ?? m?.stake);
+  const players: Player[] = (m?.Players ?? m?.players ?? []).map(toPlayer);
+  const playerIds = (m?.PlayerIds ?? m?.playerIds ?? players.map(player => player.id)).map(String);
+  return {
+    id: String(m?.Id ?? m?.id ?? m?._id ?? ''),
+    gameId: String(m?.GameId ?? m?.gameId ?? ''),
+    gameName: String(m?.GameName ?? m?.gameName ?? 'Game'),
+    mode: (m?.Mode ?? m?.mode ?? '1v1') as MatchMode,
+    status: (m?.Status ?? m?.status ?? 'pending') as MatchStatus,
+    isOpen: m?.IsOpen ?? m?.isOpen ?? false,
+    playerIds,
+    players,
+    playerCount: num(m?.PlayerCount ?? m?.playerCount, playerIds.length),
+    maxPlayers: num(m?.MaxPlayers ?? m?.maxPlayers, Math.max(playerIds.length, 2)),
+    seriesFormat: (series.Format ?? series.format ?? 'bo1') as SeriesFormat,
+    winsNeeded: num(series.WinsNeeded ?? series.winsNeeded, 1),
+    currentWinsA: num(series.CurrentWinsA ?? series.currentWinsA, 0),
+    currentWinsB: num(series.CurrentWinsB ?? series.currentWinsB, 0),
+    stakeAmount: stake.amount,
+    currency: stake.currency,
+    shopId: m?.ShopId ?? m?.shopId,
+    shopName: m?.ShopName ?? m?.shopName,
+    inviteCode: m?.InviteCode ?? m?.inviteCode,
+    createdAt: m?.CreatedAt ?? m?.createdAt ?? new Date().toISOString(),
+    updatedAt: m?.UpdatedAt ?? m?.updatedAt ?? m?.StartedAt ?? m?.startedAt,
+  };
+};
+
 /** Pull a list out of the many shapes our endpoints return. */
 const asList = (data: any, ...keys: string[]): any[] => {
   if (Array.isArray(data)) return data;
@@ -114,7 +195,6 @@ export async function createInstantMatch(draft: InstantMatchDraft): Promise<Inst
   });
   return toInstantMatch(data?.match ?? data);
 }
-
 /** Place (secure) the stake for an existing match. */
 export async function placeStake(matchId: string, stake: StakeConfig): Promise<InstantMatch> {
   const data = await request(apis.matchStake, {
@@ -197,8 +277,14 @@ export async function joinInstantMatch(matchId: string): Promise<InstantMatch> {
 export async function joinByInviteCode(code: string): Promise<InstantMatch> {
   const data = await request(apis.matchJoinByCode, {
     method: 'POST',
-    body: JSON.stringify({ inviteCode: code.trim().toUpperCase() }),
+    body: JSON.stringify({ inviteCode: normalizeInviteCode(code) }),
   });
+  return toInstantMatch(data?.match ?? data);
+}
+
+/** Load a single match (used to preview a code before joining). */
+export async function fetchMatchById(matchId: string): Promise<InstantMatch> {
+  const data = await request(apis.matchDetail(matchId), { method: 'GET' });
   return toInstantMatch(data?.match ?? data);
 }
 
@@ -226,7 +312,10 @@ export async function fetchChalkmen(shopId?: string): Promise<Player[]> {
   return asList(data, 'chalkmen', 'players').map(toPlayer);
 }
 
-/** Fetch players currently present in the shop (for instant match add). */
+/**
+ * Fetch players currently present in a shop (everyone checked in, whether or
+ * not they are looking for a match).
+ */
 export async function fetchNearbyPlayers(shopId?: string): Promise<Player[]> {
   const url = shopId
     ? `${apis.matchNearbyPlayers}?shopId=${encodeURIComponent(shopId)}`
@@ -264,5 +353,81 @@ export async function fetchWallet(): Promise<WalletInfo> {
     pending: src?.Pending ?? src?.pending,
   };
 }
+// ── Shop lounge: invite codes, presence and the live board ──────────────
 
-export { toInstantMatch, toPlayer, toShop, toStake };
+/**
+ * Ask the backend for a fresh invite code the caller can share.
+ * Falls back to a locally generated code when the endpoint is not deployed
+ * yet, so the player can still hand out a code and be joined.
+ */
+export async function generateInviteCode(shopId?: string): Promise<InviteCode> {
+  try {
+    const data = await request(apis.matchInviteCode, {
+      method: 'POST',
+      body: JSON.stringify(shopId ? { shopId } : {}),
+    });
+    const src = data?.inviteCode ?? data?.data ?? data ?? {};
+    const rawCode =
+      typeof src === 'string' ? src : pick(src, 'Code', 'code', 'InviteCode', 'inviteCode');
+    if (rawCode) {
+      return {
+        code: normalizeInviteCode(String(rawCode)),
+        expiresAt: pick(src, 'ExpiresAt', 'expiresAt'),
+        offline: false,
+      };
+    }
+  } catch {
+    // Endpoint missing or offline — a device-generated code still works.
+  }
+  return { code: generateLocalInviteCode(), offline: true };
+}
+
+/**
+ * Players in the shop who are open to play right now.
+ * Falls back to the plain nearby list (everyone treated as open) when the
+ * dedicated endpoint is not available, so the board is never empty by accident.
+ */
+export async function fetchOpenPlayers(shopId: string): Promise<ShopPlayer[]> {
+  try {
+    const data = await request(`${apis.matchOpenPlayers}?shopId=${encodeURIComponent(shopId)}`, {
+      method: 'GET',
+    });
+    return asList(data, 'players', 'openPlayers').map(toShopPlayer);
+  } catch {
+    const nearby = await fetchNearbyPlayers(shopId).catch(() => []);
+    return nearby.map(player => ({ ...player, openToPlay: true }));
+  }
+}
+
+/** Broadcast that the caller is (or is no longer) open to play in a shop. */
+export async function setOpenToPlay(shopId: string, openToPlay: boolean): Promise<boolean> {
+  const data = await request(apis.matchPresence, {
+    method: 'POST',
+    body: JSON.stringify({ shopId, openToPlay }),
+  });
+  return data?.success !== false;
+}
+
+/**
+ * Every match currently running (or waiting for players) in one shop.
+ * Polled by the live board. Throws when the endpoint is unavailable so the
+ * board can say so explicitly instead of pretending the shop is empty.
+ */
+export async function fetchShopLiveMatches(shopId: string): Promise<ShopMatchSummary[]> {
+  const data = await request(apis.matchShopLive(shopId), { method: 'GET' });
+  return asList(data, 'matches', 'liveMatches').map(toShopMatchSummary);
+}
+
+/** A single shop, with its map coordinates and on-duty chalkman. */
+export async function fetchMatchShopDetail(shopId: string): Promise<Shop> {
+  const data = await request(apis.matchShopDetail(shopId), { method: 'GET' });
+  return toShop(data?.shop ?? data, 0);
+}
+
+/** Generic shop record lookup (used when the match shop route is missing). */
+export async function fetchShopDetail(shopId: string): Promise<Shop> {
+  const data = await request(apis.shopDetail(shopId), { method: 'GET' });
+  return toShop(data?.shop ?? data, 0);
+}
+
+export { toInstantMatch, toPlayer, toShop, toShopPlayer, toStake };

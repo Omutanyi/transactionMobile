@@ -132,6 +132,26 @@ const UserHomeContent = () => {
         </TouchableOpacity>
       </View>
 
+      {/* ── Join with a code — no match setup required ── */}
+      <TouchableOpacity
+        style={styles.joinCard}
+        onPress={() => navigation.navigate('JoinMatch')}
+        activeOpacity={0.85}
+      >
+        <View style={styles.joinCardIcon}>
+          <Ionicons name="enter-outline" size={22} color={theme.success} />
+        </View>
+        <View style={styles.joinCardBody}>
+          <Text style={styles.joinCardTitle}>JOIN A MATCH</Text>
+          <Text style={styles.joinCardSub}>
+            Got an invite code? Jump straight into someone else’s game.
+          </Text>
+        </View>
+        <View style={styles.joinCardArrow}>
+          <Ionicons name="chevron-forward" size={18} color="#fff" />
+        </View>
+      </TouchableOpacity>
+
       {/* ── Quick Stats (full width) ── */}
       <GlassCard style={styles.sectionCard}>
         <Text style={styles.statsTitle}>QUICK STATS</Text>

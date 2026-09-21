@@ -14,13 +14,30 @@ import { fetchGames } from '../../services/games';
 import { fetchShops, fetchTournamentChalkmen, createTournament } from '../../services/tournament';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { toast } from '../../utils/ToastService';
+import { describeApiError } from '../../utils/apiErrors';
 import { Shop, Player, TournamentEntryMethod } from '../../types';
 
 const Stack = createStackNavigator();
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const FALLBACK_GAMES = [
-  { id: 'valorant', name: 'Valorant', image: require('../../assets/avatar.jpg') },
+interface GameOption {
+  /** Stable key for the selected card. */
+  id: string;
+  /** Identifier the API expects — this is what was previously missing. */
+  gameId: string;
+  name: string;
+  image: any;
+  maxPlayers?: number;
+}
+
+const FALLBACK_GAMES: GameOption[] = [
+  {
+    id: 'valorant',
+    gameId: 'valorant',
+    name: 'Valorant',
+    image: require('../../assets/avatar.jpg'),
+    maxPlayers: 10,
+  },
 ];
 const FALLBACK_IMAGES = FALLBACK_GAMES.map(g => g.image);
 
@@ -45,21 +62,14 @@ const PARTICIPANT_OPTIONS = [8, 16, 32, 64, 128];
 const NAME_MAX = 50;
 const DESC_MAX = 300;
 
-interface GameOption {
-  id: string;
-  name: string;
-  image: any;
-  GameId?: number;
-  gameId?: number;
-}
-
 const CreateTournamentContent = () => {
   const theme = useTheme() as AppTheme;
   const styles = createStyles(theme);
 
   const [step, setStep] = useState(1);
-  const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
-  const [selectedGameName, setSelectedGameName] = useState('valorant');
+  // The whole game record is kept, not just its id: `gameId` is the value the
+  // API needs, while `id` is only the key used for the selected state.
+  const [selectedGame, setSelectedGame] = useState<GameOption>(FALLBACK_GAMES[0]);
   const [name, setName] = useState('Legends Arena Cup');
   const [description, setDescription] = useState('Compete against the best and prove you are the ultimate champion!');
   const [type, setType] = useState('single_elimination');
@@ -89,9 +99,8 @@ const CreateTournamentContent = () => {
       .then(list => {
         if (!active || !list.length) return;
         setGames(list);
-        const first: any = list[0];
-        if (first?.GameId ?? first?.gameId) setSelectedGameId(first?.GameId ?? first?.gameId);
-        setSelectedGameName(prev => (list.some(g => g.id === prev) ? prev : list[0].id));
+        // Keep the current selection when the API still lists that game.
+        setSelectedGame(prev => list.find(game => game.id === prev.id) ?? list[0]);
       })
       .catch(() => {});
     return () => { active = false; };
@@ -111,9 +120,9 @@ const CreateTournamentContent = () => {
   }, [locationType]);
 
   useEffect(() => {
-    if (entryMethod !== 'escrow' || !selectedGameId) return;
+    if (entryMethod !== 'escrow' || !selectedGame?.gameId) return;
     let active = true;
-    fetchTournamentChalkmen(selectedGameId)
+    fetchTournamentChalkmen(selectedGame.gameId)
       .then(list => {
         if (!active || !list.length) return;
         setChalkmen(list);
@@ -121,20 +130,16 @@ const CreateTournamentContent = () => {
       })
       .catch(() => {});
     return () => { active = false; };
-  }, [entryMethod, selectedGameId]);
+  }, [entryMethod, selectedGame]);
 
   useEffect(() => {
-    // Progress the stepper when the user fills fields
+    // Move the stepper forward as the required fields get filled in.
     const prizeNum = parseInt(prize || '0', 10) || 0;
-    if (selectedGameName && step < 2) {
-      setStep(2);
-    }
-    if (name.trim() && selectedGameName && prizeNum > 0 && participants > 0) {
-      setStep(3);
-    } else if (step === 3 && !(name.trim() && prizeNum > 0 && participants > 0)) {
-      setStep(2);
-    }
-  }, [selectedGameName, name, prize, participants]);
+    const hasGame = !!selectedGame?.gameId;
+    const complete = hasGame && !!name.trim() && prizeNum > 0 && participants > 0;
+    const next = complete ? 3 : hasGame ? 2 : 1;
+    setStep(prev => (prev === next ? prev : next));
+  }, [name, participants, prize, selectedGame]);
 
   const handleStartDateChange = (event: any, selected?: Date) => {
     if (Platform.OS === 'android') {
@@ -177,7 +182,7 @@ const CreateTournamentContent = () => {
       toast.error('Please enter a tournament name');
       return;
     }
-    if (!selectedGameId) {
+    if (!selectedGame?.gameId) {
       toast.error('Please select a game');
       return;
     }
@@ -199,7 +204,7 @@ const CreateTournamentContent = () => {
       const entry = entryMethod === 'free' ? 0 : parseInt(entryAmount || '0', 10) || 0;
       const body = {
         name: name.trim(),
-        gameId: selectedGameId,
+        gameId: selectedGame.gameId,
         startDate,
         endDate,
         prizePool: parseInt(prize) || 0,
@@ -224,7 +229,7 @@ const CreateTournamentContent = () => {
       toast.success('Tournament created successfully!');
       navigation.goBack();
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to create tournament');
+      toast.error(describeApiError(e, 'Failed to create tournament'));
     } finally {
       setCreating(false);
     }
@@ -275,17 +280,14 @@ const CreateTournamentContent = () => {
       <Text style={styles.sectionLabel}>SELECT GAME</Text>
       <View style={styles.gameGrid}>
         {games.map(g => {
-          const active = g.id === selectedGameName;
+          const active = g.id === selectedGame.id;
           const hasImage = !!g.image;
-          const bgColor = stringToColor(g.id || g.name || '')
+          const bgColor = stringToColor(g.id || g.name || '');
           return (
             <TouchableOpacity
               key={g.id}
               style={[styles.gameCard, active && styles.gameCardSelected]}
-              onPress={() => {
-                setSelectedGameName(g.id);
-                if (g.GameId) setSelectedGameId(g.GameId);
-              }}
+              onPress={() => setSelectedGame(g)}
               activeOpacity={0.9}
             >
               {hasImage ? (

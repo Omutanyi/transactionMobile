@@ -215,13 +215,60 @@ export const createStyles = (theme: AppTheme, topInset: number = 0) =>
       color: theme.secondary,
     },
 
+    // ── Join-by-code entry (compact row under the action cards) ───
+    joinCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginHorizontal: 16,
+      marginBottom: 16,
+      padding: 14,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.success,
+      backgroundColor: theme.success + '12',
+    },
+    joinCardIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.success + '22',
+      borderWidth: 1,
+      borderColor: theme.success,
+      marginRight: 12,
+    },
+    joinCardBody: { flex: 1 },
+    joinCardTitle: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.text,
+      letterSpacing: 0.4,
+    },
+    joinCardSub: {
+      fontSize: 11,
+      color: theme.subText,
+      fontWeight: '600',
+      marginTop: 2,
+      lineHeight: 15,
+    },
+    joinCardArrow: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: theme.success,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
     // ── Full-width section cards ──────────────────────────────────
     sectionCard: {
       marginHorizontal: 16,
       marginBottom: 16,
-      backgroundColor: theme.card,
       borderRadius: 16,
       padding: 16,
+      borderColor: theme.card,
+      backgroundColor: theme.card + '12',
     },
 
     // Section card header row (title + VIEW ALL)
@@ -255,6 +302,7 @@ export const createStyles = (theme: AppTheme, topInset: number = 0) =>
       paddingVertical: 10,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
+      backgroundColor: theme.card + '12',
     },
     activityThumb: {
       width: 56,

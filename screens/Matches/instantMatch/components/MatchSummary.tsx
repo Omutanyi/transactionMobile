@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useTheme } from '@emotion/react';
 import { Ionicons } from '@expo/vector-icons';
 import { AppTheme } from '../../../../theme';
@@ -18,7 +18,9 @@ interface RowProps {
 const SummaryRow: React.FC<RowProps> = ({ label, value, styles }) => (
   <View style={styles.summaryRow}>
     <Text style={styles.summaryLabel}>{label}</Text>
-    <Text style={styles.summaryValue} numberOfLines={1}>{value}</Text>
+    <Text style={styles.summaryValue} numberOfLines={1}>
+      {value}
+    </Text>
   </View>
 );
 
@@ -28,6 +30,8 @@ interface Props {
   rematching: boolean;
   onRematch: () => void;
   onDismiss: () => void;
+  /** Opens the share sheet with the match's invite code. */
+  onShareCode: () => void;
 }
 
 /** Confirmation card shown after a match is created, with the rematch action. */
@@ -37,6 +41,7 @@ const MatchSummary: React.FC<Props> = ({
   rematching,
   onRematch,
   onDismiss,
+  onShareCode,
 }) => {
   const theme = useTheme() as AppTheme;
   const styles = createStyles(theme);
@@ -48,9 +53,7 @@ const MatchSummary: React.FC<Props> = ({
       : `${formatMoney(amount, match.stake.currency)} • ${getWagerLabel(match.stake.method)}`;
 
   const locationValue =
-    match.location === 'shop'
-      ? `In shop${shopName ? ` • ${shopName}` : ''}`
-      : 'Online';
+    match.location === 'shop' ? `In shop${shopName ? ` • ${shopName}` : ''}` : 'Online';
 
   const opponentCount = Math.max(match.playerIds.length - 1, 0);
 
@@ -87,12 +90,25 @@ const MatchSummary: React.FC<Props> = ({
       />
 
       {match.inviteCode ? (
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Invite code</Text>
-          <Text style={[styles.summaryValue, styles.inviteCodeValue]}>
-            {match.inviteCode}
-          </Text>
-        </View>
+        <>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Invite code</Text>
+            <Text style={[styles.summaryValue, styles.inviteCodeValue]}>
+              {match.inviteCode}
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.shareBtn} onPress={onShareCode} activeOpacity={0.85}>
+            <Ionicons name="share-social-outline" size={15} color="#fff" />
+            <Text style={styles.shareBtnText}>SHARE CODE</Text>
+          </TouchableOpacity>
+        </>
+      ) : null}
+
+      {match.location === 'shop' ? (
+        <Text style={styles.codeCaption}>
+          Everyone in this match is playing at{' '}
+          {shopName ?? match.shopName ?? 'the same shop'} — joiners must be there too.
+        </Text>
       ) : null}
 
       <View style={styles.summaryActions}>

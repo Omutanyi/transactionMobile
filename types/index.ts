@@ -186,6 +186,73 @@ export interface Shop {
   /** Chalkman (attendant) currently on duty */
   chalkmanName?: string;
   isOnline?: boolean;
+  /** Map coordinates used to draw the shop on the map (optional on older backends). */
+  latitude?: number;
+  longitude?: number;
+  city?: string;
+  /** Distance from the caller in km, when the backend knows the caller's position. */
+  distanceKm?: number;
+  /** Players currently checked in at the shop. */
+  playerCount?: number;
+  /** True while the shop is hosting at least one live match. */
+  hasLiveMatches?: boolean;
+  /** Contact number for the shop counter. */
+  phone?: string;
+}
+
+/** A player physically present at a shop, optionally flagged as open to play. */
+export interface ShopPlayer extends Player {
+  /** True when the player is broadcasting that they want a match right now. */
+  openToPlay?: boolean;
+  /** Minutes since the player checked in / was last seen in the shop. */
+  minutesAgo?: number;
+  /** Game the player is waiting to play (when the backend supplies it). */
+  waitingForGameName?: string;
+}
+
+/**
+ * Compact view of a match taking place inside a shop, used by the live board
+ * that every player in that shop polls.
+ */
+export interface ShopMatchSummary {
+  id: string;
+  gameId: string;
+  gameName: string;
+  mode: MatchMode;
+  status: MatchStatus;
+  isOpen: boolean;
+  playerIds: string[];
+  players: Player[];
+  playerCount: number;
+  maxPlayers: number;
+  seriesFormat: SeriesFormat;
+  winsNeeded: number;
+  currentWinsA: number;
+  currentWinsB: number;
+  stakeAmount: number;
+  currency: StakeConfig['currency'];
+  shopId?: string;
+  shopName?: string;
+  /** Present on open matches so anyone in the shop can jump in. */
+  inviteCode?: string;
+  createdAt: string;
+  /** When the board last saw a change — drives the "updated Xs ago" label. */
+  updatedAt?: string;
+}
+
+/** A shareable invite code that lets another player join a match. */
+export interface InviteCode {
+  code: string;
+  /** ISO timestamp after which the code stops working (backend supplied). */
+  expiresAt?: string;
+  /** True when the code was generated on-device because the API was unavailable. */
+  offline?: boolean;
+}
+
+/** Presence ping: tells the shop that this player is available for a match. */
+export interface ShopPresence {
+  shopId: string;
+  openToPlay: boolean;
 }
 
 /** A single match inside a tournament bracket. */

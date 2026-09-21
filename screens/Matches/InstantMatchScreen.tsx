@@ -21,9 +21,13 @@ import GamePicker from './instantMatch/components/GamePicker';
 import LocationPicker from './instantMatch/components/LocationPicker';
 import MatchSetup from './instantMatch/components/MatchSetup';
 import WagerPicker from './instantMatch/components/WagerPicker';
-import OpponentsPicker from './instantMatch/components/OpponentsPicker';
 import NotificationToggle from './instantMatch/components/NotificationToggle';
 import MatchSummary from './instantMatch/components/MatchSummary';
+import InviteCodeCard from './instantMatch/components/InviteCodeCard';
+import SelectedOpponents from './instantMatch/components/SelectedOpponents';
+import ShopLocationCard from './instantMatch/components/ShopLocationCard';
+import OpenPlayersBoard from './instantMatch/components/OpenPlayersBoard';
+import ShopMatchesBoard from './instantMatch/components/ShopMatchesBoard';
 
 const Stack = createStackNavigator();
 
@@ -38,13 +42,12 @@ const InstantMatchContent = () => {
     setup.selectedGame.name,
     setup.matchMode === 'party' ? `${setup.playerCount} players` : '1v1',
     setup.seriesLabel,
-    setup.location === 'shop'
-      ? setup.selectedShop?.name ?? 'In shop'
-      : 'Online',
+    setup.inShop ? setup.selectedShop?.name ?? 'In shop' : 'Online',
     setup.wagerMethod === 'none' ? 'No wager' : `$${setup.stakeAmount}`,
   ].join('  •  ');
 
   const isOpenMatch = setup.selectedPlayers.length === 0;
+  const myMatchIds = setup.createdMatch ? [setup.createdMatch.id] : [];
 
   return (
     <ScrollView
@@ -73,7 +76,7 @@ const InstantMatchContent = () => {
         step={2}
         icon="location-outline"
         title="WHERE ARE YOU PLAYING"
-        hint={setup.location === 'shop' ? 'IN SHOP' : 'ONLINE'}
+        hint={setup.inShop ? 'IN SHOP' : 'ONLINE'}
         accent={theme.success}
       />
       <LocationPicker
@@ -85,7 +88,62 @@ const InstantMatchContent = () => {
         onSelectShop={setup.selectShop}
       />
 
-      {/* ── 3. Match setup ── */}
+      {/* ── Shop lounge: map, who is here, what is running ── */}
+      {setup.inShop && setup.shop ? (
+        <>
+          <SectionHeader
+            icon="map-outline"
+            title="SHOP LOCATION"
+            hint={setup.shop.city ?? 'GAME SHOP'}
+            accent={theme.info}
+          />
+          <ShopLocationCard
+            shop={setup.shop}
+            playersHere={setup.openPlayers.length}
+            liveMatches={setup.liveMatches.length}
+            selected={setup.selectedShop?.id === setup.shop.id}
+            onSelect={() => setup.selectShop(setup.shop as any)}
+          />
+
+          <SectionHeader
+            icon="hand-left-outline"
+            title="WHO IS OPEN TO PLAY"
+            hint={`${setup.openPlayers.length} HERE`}
+            accent={theme.success}
+          />
+          <OpenPlayersBoard
+            players={setup.openPlayers}
+            loading={setup.shopPlayersLoading}
+            error={setup.shopPlayersError}
+            imOpenToPlay={setup.imOpenToPlay}
+            onToggleOpenToPlay={setup.toggleOpenToPlay}
+            selectedIds={setup.selectedPlayers.map(player => player.id)}
+            onAddPlayer={setup.togglePlayer}
+            maxOpponents={setup.maxOpponents}
+            onRefresh={setup.refreshShopPlayers}
+          />
+
+          <SectionHeader
+            icon="pulse-outline"
+            title="MATCHES IN THIS SHOP"
+            hint={setup.hasLiveMatches ? 'LIVE' : 'IDLE'}
+            accent={theme.warning}
+          />
+          <ShopMatchesBoard
+            matches={setup.liveMatches}
+            loading={setup.liveBoardLoading}
+            refreshing={setup.liveBoardRefreshing}
+            error={setup.liveBoardError}
+            lastUpdated={setup.liveBoardUpdatedAt}
+            onRefresh={setup.refreshLiveBoard}
+            onJoin={setup.joinOpenMatch}
+            joiningId={setup.joiningMatchId}
+            myMatchIds={myMatchIds}
+          />
+        </>
+      ) : null}
+
+      {/* ── Match setup ── */}
       <SectionHeader
         step={3}
         icon="git-compare-outline"
@@ -103,7 +161,7 @@ const InstantMatchContent = () => {
         onDecrementPlayers={setup.decrementPlayers}
       />
 
-      {/* ── 4. Wager ── */}
+      {/* ── Wager ── */}
       <SectionHeader
         step={4}
         icon="cash-outline"
@@ -124,27 +182,33 @@ const InstantMatchContent = () => {
         seriesLabel={setup.seriesLabel}
       />
 
-      {/* ── 5. Opponents ── */}
+      {/* ── 5. Invite code + who is in ── */}
       <SectionHeader
         step={5}
-        icon="people-outline"
-        title="OPPONENTS"
+        icon="keypad-outline"
+        title="INVITE & OPPONENTS"
         hint={`${setup.selectedPlayers.length}/${setup.maxOpponents} ADDED`}
         accent={theme.info}
       />
-      <OpponentsPicker
-        inviteCode={setup.inviteCode}
-        onChangeInviteCode={setup.setInviteCode}
-        onApplyInviteCode={setup.applyInviteCode}
-        applyingCode={setup.applyingCode}
-        nearbyPlayers={setup.nearbyPlayers}
-        nearbyLoading={setup.nearbyLoading}
-        onRetryNearby={setup.loadNearby}
-        selectedPlayers={setup.selectedPlayers}
-        onTogglePlayer={setup.togglePlayer}
-        onRemovePlayer={setup.removePlayer}
+      <InviteCodeCard
+        code={setup.myInviteCode}
+        generating={setup.generatingCode}
+        onGenerate={setup.generateMyCode}
+        onShare={setup.shareMyCode}
+        joinCode={setup.joinCode}
+        onChangeJoinCode={setup.setJoinCode}
+        onJoin={setup.joinWithCode}
+        joining={setup.joining}
+        gameName={setup.selectedGame.name}
+        shopName={setup.selectedShop?.name ?? null}
+        offline={setup.inviteCodeOffline}
+      />
+      <SelectedOpponents
+        players={setup.selectedPlayers}
         maxOpponents={setup.maxOpponents}
-        inShop={setup.location === 'shop'}
+        onRemove={setup.removePlayer}
+        inShop={setup.inShop}
+        shopName={setup.selectedShop?.name ?? null}
       />
 
       <NotificationToggle
@@ -180,6 +244,7 @@ const InstantMatchContent = () => {
           rematching={setup.rematching}
           onRematch={setup.rematch}
           onDismiss={setup.dismissSummary}
+          onShareCode={setup.shareMyCode}
         />
       )}
     </ScrollView>

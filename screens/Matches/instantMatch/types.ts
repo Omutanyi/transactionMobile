@@ -2,7 +2,10 @@ import { MatchMode, SeriesFormat } from '../../../types';
 
 /** A game option rendered in the picker (API game + local max-player hint). */
 export interface GameOption {
+  /** Stable key used for the selected/highlighted state. */
   id: string;
+  /** Identifier the API expects when creating the match. */
+  gameId: string;
   name: string;
   image: any;
   maxPlayers: number;

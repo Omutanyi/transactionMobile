@@ -82,7 +82,8 @@ export const buildWagerOptions = (colors: {
 export const QUICK_AMOUNTS = [5, 10, 20, 50, 100];
 
 // ── Validation limits ──────────────────────────────────────────────────
-export const INVITE_CODE_LENGTH = 8;
+// The invite-code helpers live in utils so the match service can use them too.
+export { INVITE_CODE_LENGTH } from '../../../utils/inviteCode';
 export const MIN_STAKE = 1;
 export const MAX_STAKE = 100000;
 export const DEFAULT_STAKE = '20';

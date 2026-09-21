@@ -206,3 +206,95 @@ The tournament section now supports **online** and **in-shop (local)** tournamen
 ## Backend Contract
 See **`docs/TOURNAMENT_BACKEND_PROMPT.md`** for the full REST contract, data models, validation rules, bracket generation, and payout logic.
 </content>
+---
+
+# Shop Lounge, Invite Codes & Join-By-Code (Update)
+
+## Overview
+
+Three things changed after the instant-match flow shipped:
+
+1. **You no longer need to create a match to get a code.** A player can generate an
+   invite code and hand it out; anyone with the code joins straight in.
+2. **Matches played in a shop are physically local.** The shop is shown on a map,
+   the players in a match are all at that same shop, and the shop's open players
+   and running matches are visible live.
+3. **Two blocking bugs are fixed** (avatar column fault, tournament game picker).
+
+## New Files
+
+| File | Role |
+|---|---|
+| `screens/Matches/JoinMatchScreen.tsx` (+ `.styles.ts`) | Standalone "Join a match" screen — paste a code, no setup required |
+| `components/map/TileMap.tsx` | OpenStreetMap raster-tile map with a centre pin (no native dep, no API key) |
+| `components/map/tileMath.ts` | Web-Mercator tile maths (zoom ↔ span, tile grid, lat/lng → pixels) |
+| `utils/maps.ts` | Deep links (`openInMaps`), distance/coordinate formatting, haversine |
+| `utils/inviteCode.ts` | Code alphabet + generation, normalisation, `shareInviteCode` |
+| `utils/apiErrors.ts` | Turns API/schema faults into human messages (`describeApiError`) |
+| `screens/Matches/instantMatch/useShopLiveMatches.ts` | 8-second polling of a shop's live board, paused when backgrounded |
+| `screens/Matches/instantMatch/components/InviteCodeCard.tsx` | Generate / share a code, or type one in to join |
+| `screens/Matches/instantMatch/components/ShopLocationCard.tsx` | Shop on the map + DIRECTIONS, who is inside, live-match count |
+| `screens/Matches/instantMatch/components/OpenPlayersBoard.tsx` | Players in this shop open to play, with an "I'm open" switch |
+| `screens/Matches/instantMatch/components/ShopMatchesBoard.tsx` | Every match running in the shop, with JOIN on open ones |
+| `screens/Matches/instantMatch/components/SelectedOpponents.tsx` | Confirmed opponents, with the same-shop note |
+| `docs/BACKEND_UPDATE_PROMPT.md` | Backend work needed (see below) |
+
+## Updated Files
+
+- **`services/match.ts`** — `generateInviteCode`, `joinByInviteCode`, `setOpenToPlay`,
+  `fetchOpenPlayers`, `fetchShopLiveMatches`, `fetchMatchShopDetail`, `fetchMatchById`,
+  `fetchWallet`, a shops fallback chain, and new normalisers (`toShopPlayer`,
+  `toShopMatchSummary`, `toShop` with coordinates).
+- **`api.ts`** — `/match/invite-code`, `/match/presence`, `/match/open-players`,
+  `/match/shops/{id}/live`, `/match/shops/{id}`, `/match/{id}`, `/match/join`.
+- **`types/index.ts`** — `Shop` (latitude/longitude/city/phone/playerCount/hasLiveMatches/distanceKm),
+  `ShopPlayer`, `ShopMatchSummary`, `InviteCode`, `WalletInfo`, `MatchLocation`.
+- **`screens/Matches/InstantMatchScreen.tsx`** — adds the shop map, open-players board
+  and live shop-matches board between the location picker and match setup.
+- **`screens/Home/UserHome.tsx`** (+ styles) — new **JOIN A MATCH** entry card.
+- **`screens/Dashboard/UserDashboard.tsx`** — registers the `JoinMatch` screen.
+- **`screens/Tournaments/CreateTournament.tsx`** — the game picker now carries a real
+  `gameId` (the previous shape made Create Tournament silently send no game).
+
+## Flows
+
+### Get a code without creating a match
+Instant Match → **INVITE & OPPONENTS** → **GENERATE CODE** → share it. If
+`POST /match/invite-code` is not deployed, a code is generated on-device and
+marked as offline; that code is then bound to the match when it is created.
+
+### Join without creating a match
+Home → **JOIN A MATCH** → type the code → **JOIN**. Alternatively tap **JOIN** on any
+open match in the shop's live board. When the match is in a shop, the client adopts
+that shop so the board, presence list and summary agree.
+
+### Same-shop rule
+A shop match only involves players at that shop. The client refuses to join a match
+from another shop, switches shop context when it joins one, and the server must
+enforce the same rule (see the backend prompt, §4).
+
+### Live shop activity
+With a shop selected the screen shows, refreshed every 8 seconds:
+- where the shop is on the map, with DIRECTIONS;
+- who is in the shop and open to play (with an "I'm open to play" switch);
+- every match running there, with live player names and JOIN.
+
+Polling pauses when the app is backgrounded and keeps the last good list when a
+request fails, so a dropped connection never blanks the board.
+
+## Bugs Fixed
+
+1. **`Invalid column name 'ProfileImageUrl'`** — creating any match failed with a 500
+   from the API. The client accepts `AvatarUrl` / `ProfileImageUrl` / `ProfileImage`
+   (`PROFILE_IMAGE_KEYS`) and reports the server fault clearly; the backend must add
+   or alias the column (see `docs/BACKEND_UPDATE_PROMPT.md` §1).
+2. **Create Tournament game not selecting** — the picker compared one identifier and
+   stored another, so the selected game was never sent. It now keeps the whole game
+   record: `id` for the UI, `gameId` for the API payload.
+
+## Backend Work Required
+
+See **`docs/BACKEND_UPDATE_PROMPT.md`** for the complete contract: the
+`ProfileImageUrl` hotfix, `POST /match/invite-code`, `POST /match/presence`,
+`GET /match/open-players`, `GET /match/shops/{id}/live`, `GET /match/shops/{id}`,
+shop coordinates, the same-shop rule, error codes and a curl acceptance checklist.
